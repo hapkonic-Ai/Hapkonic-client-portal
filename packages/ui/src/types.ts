@@ -1,0 +1,6 @@
+export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' | 'outline'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'outline'
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
+export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
+export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right'
