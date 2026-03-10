@@ -129,9 +129,9 @@ function UpdateCard({ update, index }: { update: ProgressUpdate; index: number }
           {update.body}
         </p>
 
-        {update.attachments.length > 0 && (
+        {(update.attachments ?? []).length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {update.attachments.map((att, i) => (
+            {(update.attachments ?? []).map((att, i) => (
               <a
                 key={i}
                 href={att.url}
