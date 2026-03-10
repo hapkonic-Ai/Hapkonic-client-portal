@@ -1,0 +1,678 @@
+# 🚀 HAPKONIC SOFTWARE AGENCY — Client Portal
+
+### Master Development Plan
+
+> A premium, immersive client portal that transforms how Hapkonic delivers transparency, collaboration, and trust to its clients.
+
+---
+
+## Architecture Overview
+
+| Layer | Stack | Free Tier |
+|---|---|---|
+| **Frontend** | React 18 + Tailwind CSS + Framer Motion + Three.js | — |
+| **Backend** | Node.js / Express (or Next.js API Routes) | — |
+| **Database** | Neon PostgreSQL + Prisma ORM | 0.5 GB storage, 190 compute hours/mo |
+| **Auth** | JWT + bcrypt (admin-created credentials) | — |
+| **Storage** | Uploadthing (scanned documents & files) | 2 GB storage, 2 GB bandwidth free |
+| **Calendar** | Google Calendar API (OAuth 2.0) | Free |
+| **Realtime** | Socket.io (comments, notifications) | — |
+| **Cache/Queue** | Upstash Redis | 10K commands/day free |
+| **Email** | Resend | 3,000 emails/mo free |
+| **Hosting** | Vercel (frontend) + Render (backend) | Both have generous free tiers |
+
+### 💡 Why These Free Platforms?
+
+| Service | Why | Free Limit |
+|---|---|---|
+| **Neon** | Serverless Postgres, auto-suspend on idle, branching for dev/staging | 0.5 GB storage, 190 compute hrs |
+| **Uploadthing** | Dead-simple file uploads for Next.js/React, built-in CDN, signed URLs | 2 GB storage, 2 GB bandwidth |
+| **Upstash Redis** | Serverless Redis for rate limiting, caching, sessions | 10K commands/day |
+| **Resend** | Modern email API, great DX, React Email support | 3,000 emails/mo |
+| **Render** | Free web services with auto-deploy from GitHub | 750 hrs/mo |
+| **Vercel** | Best-in-class frontend hosting, edge network, preview deploys | 100 GB bandwidth |
+
+---
+
+## PHASE 1 — Project Scaffolding & Design System
+
+**Duration:** 3–4 days
+
+- Initialize monorepo (Turborepo or Nx) with `apps/web`, `apps/api`, `packages/ui`
+- Configure Tailwind with custom Hapkonic brand tokens:
+  - Color palette (primary, accent, neutral, semantic)
+  - Typography scale (display, heading, body, mono)
+  - Spacing, radius, shadow, and motion tokens
+- Build foundational `packages/ui` design system:
+  - `<Button>`, `<Input>`, `<Card>`, `<Badge>`, `<Avatar>`, `<Modal>`, `<Tooltip>`
+  - Dark/light theme toggle with CSS variables
+- Set up ESLint, Prettier, Husky pre-commit hooks
+- Configure CI/CD pipeline (GitHub Actions → Vercel/Render)
+- Create global layout shell: sidebar, topbar, content area with route transitions
+
+**Deliverable:** Empty but fully styled, routed, and deployable application shell.
+
+---
+
+## PHASE 2 — Database Schema & API Foundation
+
+**Duration:** 4–5 days
+
+- Design and migrate Neon PostgreSQL schema via Prisma:
+  - Configure Neon project with `main` branch (production) + `dev` branch (development)
+  - Use Neon's serverless driver (`@neondatabase/serverless`) for edge-compatible connections
+  - Enable connection pooling via Neon's built-in PgBouncer
+  ```
+  User (id, email, password_hash, role, client_id, avatar, created_at)
+  Client (id, company_name, logo, industry, onboarded_at)
+  Project (id, client_id, name, description, status, start_date, end_date)
+  Document (id, project_id, category, label, file_url, uploaded_by, uploaded_at)
+  Milestone (id, project_id, title, description, status, target_date, order)
+  MilestoneComment (id, milestone_id, user_id, body, created_at)
+  Meeting (id, project_id, title, gcal_event_id, start_time, end_time, link)
+  Task (id, project_id, milestone_id, title, start_date, end_date, progress, assignee)
+  Invoice (id, client_id, amount, status, due_date, pdf_url, uploaded_by, notes)
+  PaymentReminder (id, invoice_id, sent_at, channel)
+  ProgressUpdate (id, project_id, user_id, body, percentage, attachments, created_at)
+  AdminLog (id, user_id, action, entity_type, entity_id, metadata, created_at)
+  ```
+- Build Express/Next.js API with versioned routes (`/api/v1/...`)
+- Implement middleware: auth guard, rate limiter, error handler, request logger
+- Seed database with demo data for development
+- Write Postman/Bruno collection for all endpoints
+
+**Deliverable:** Fully documented REST API with seed data and test suite.
+
+---
+
+## PHASE 3 — Hapkonic Admin Portal (Full Control Center)
+
+**Duration:** 5–6 days
+
+- Build admin portal at `/admin` with protected routes (role: `admin`, `manager`)
+- **Client Management:**
+  - CRUD for clients (company name, logo, industry, contact info)
+  - Assign projects to clients
+  - Client profile overview: all projects, documents, invoices, activity at a glance
+- **User/Credential Management:**
+  - Admin creates login credentials for clients (no self-registration)
+  - Set roles: `admin`, `manager`, `client`
+  - Password generation + secure email delivery of credentials via Resend
+  - Force password reset on first login
+  - Deactivate/reactivate client accounts
+- **Project Management:**
+  - Create projects, assign to clients, set date range, description, status
+  - Add/edit/reorder milestones and tasks (feeds into Gantt chart + timeline)
+  - Set task dependencies, assignees, progress percentages
+- **Document Upload Center:**
+  - Drag-and-drop multi-file uploader for all 11 document categories
+  - Bulk upload with auto-categorization
+  - Replace/version existing documents
+  - View which documents each client has seen/downloaded
+- **Progress Update Publisher:**
+  - Rich text editor (Markdown + image embed) to post progress updates per project
+  - Attach screenshots, files, or links to each update
+  - Set overall project percentage and per-category breakdown
+  - Updates appear instantly on client's dashboard
+- **Invoice Manager:**
+  - Upload PDF invoices per client (via Uploadthing)
+  - Set amount, due date, status (`Pending`, `Paid`, `Overdue`, `Partially Paid`)
+  - Manually mark invoices as paid/partially paid/write off
+  - Add notes to invoices (visible to client)
+  - Trigger payment reminder emails manually or via schedule
+- **Meeting Scheduler:**
+  - Create/edit meetings that sync to Google Calendar
+  - Add agenda notes (visible to client before meeting)
+  - Post meeting summary + action items after meeting
+- **Milestone Comment Inbox:**
+  - Unified view of all client comments across all milestones
+  - Reply to client comments directly from admin panel
+  - Mark conversations as resolved
+  - Unread/flagged comment indicators
+- **Activity Log:**
+  - Full audit trail: who created/modified/deleted what, when
+  - Filterable by admin user, action type, date range
+  - Export log as CSV
+
+**Deliverable:** A powerful single admin portal where Hapkonic team manages everything — clients, projects, documents, invoices, updates, meetings, and communication.
+
+---
+
+## PHASE 4 — Authentication System & Login Page
+
+**Duration:** 3–4 days
+
+- **Login Page UI:**
+  - Split-screen layout: left = 3D animated Hapkonic branding (Three.js), right = login form
+  - Floating geometric shapes with subtle parallax on mouse move
+  - Smooth field focus animations, inline validation
+  - "Forgot password" flow with email OTP
+  - First-login forced password change screen
+- **Auth Backend:**
+  - JWT access + refresh token strategy
+  - Secure HTTP-only cookie storage
+  - Token rotation on refresh
+  - Brute-force protection (rate limiting + account lockout after 5 attempts)
+  - Session management (view active sessions, revoke)
+- Role-based route guards on frontend
+- Redirect logic based on role after login
+
+**Deliverable:** Secure, visually stunning login experience with admin-provisioned credentials.
+
+---
+
+## PHASE 5 — Landing Page with Scroll Animations & 3D
+
+**Duration:** 5–7 days
+
+- **Hero Section:**
+  - Full-viewport Three.js scene: interactive 3D object (rotating Hapkonic logo or abstract mesh)
+  - Particle field background reacting to cursor position
+  - Magnetic text effect on headline with staggered letter reveal
+  - CTA button with liquid hover animation
+- **Services Section:**
+  - Horizontal scroll-triggered cards with parallax depth layers
+  - Each service card: icon animation on enter, brief description, "View Demo" button
+  - Services: Web Dev, Mobile Apps, UI/UX Design, Cloud/DevOps, AI/ML, Consulting
+- **Live Demos Section:**
+  - Embedded interactive mini-demos (iframe or component previews)
+  - Before/after sliders, interactive prototypes, video walkthroughs
+  - Smooth scale-up transition on scroll into view
+- **Testimonials Section:**
+  - Auto-rotating 3D carousel (Three.js or CSS 3D transforms)
+  - Client photo, quote, company logo, star rating
+  - Draggable rotation with momentum physics
+- **Stats/Numbers Section:**
+  - Animated counter on scroll (projects delivered, clients, years, uptime)
+  - Subtle background grid animation
+- **Footer:**
+  - Staggered link reveal, social icons with magnetic hover, newsletter input
+- All sections use `IntersectionObserver` for performant scroll-triggered animations
+- Implement smooth locomotive-scroll or Lenis for butter-smooth scrolling
+
+**Deliverable:** A jaw-dropping, portfolio-grade landing page that sells Hapkonic before login.
+
+---
+
+## PHASE 6 — Document Vault (Documents 1–11)
+
+**Duration:** 4–5 days
+
+- **Document Upload (Admin side):**
+  - Drag-and-drop multi-file uploader with progress bars
+  - Categorize documents (1–11 predefined categories + custom)
+  - Auto-generate thumbnails for scanned documents (PDF → image preview)
+  - File validation: type, size, virus scan integration (ClamAV or API)
+  - Storage (free tier, India-friendly):
+    - **Uploadthing** (2 GB free) — drag-and-drop integration, built-in CDN, React/Next.js SDK
+    - Use `createUploadthing()` for type-safe file routes
+    - Automatic file URL generation and deletion API
+  - Signed URL access via Uploadthing's built-in URL system
+- **Document Viewer (Client side):**
+  - Grid/List toggle view with animated transitions
+  - Each document card: thumbnail preview, category badge, upload date, download button
+  - Inline PDF/image viewer (react-pdf or iframe) — no download required to view
+  - Search and filter by category, date, keyword
+  - Document status indicators: `New`, `Viewed`, `Downloaded`
+- **Security:**
+  - Signed URLs with expiry (15 min)
+  - Access logging (who viewed/downloaded what, when)
+  - Watermark overlay with client name on viewed documents
+
+**Deliverable:** Secure, organized document vault with preview, download, and audit trail.
+
+---
+
+## PHASE 7 — Meeting Scheduler with Google Calendar Sync
+
+**Duration:** 4–5 days
+
+- **Google Calendar Integration:**
+  - OAuth 2.0 consent flow for Hapkonic's calendar account
+  - Bi-directional sync: create/update/delete events reflected in both systems
+  - Webhook listener for real-time calendar change notifications
+- **Meeting Dashboard (Client side):**
+  - "Next 2 Weeks" view as default (configurable range)
+  - Three view modes: timeline, calendar grid, list
+  - Each meeting card: title, date/time, duration, Google Meet link, attendees, agenda
+  - Color-coded by type: kickoff, review, standup, demo, ad-hoc
+  - Countdown timer for upcoming meeting (next 24h)
+- **Meeting Actions:**
+  - One-click "Join Meeting" button (opens Google Meet)
+  - Pre-meeting agenda notes (editable by admin, viewable by client)
+  - Post-meeting summary + action items (added by admin after meeting)
+- **Notifications:**
+  - Email + in-app reminder 24h and 1h before meeting
+  - Push notification support (PWA)
+
+**Deliverable:** Synced meeting schedule showing upcoming 2 weeks with join links and agendas.
+
+---
+
+## PHASE 8 — Interactive Gantt Chart / Roadmap System
+
+**Duration:** 6–7 days
+
+- **Gantt Chart Engine:**
+  - Custom-built with D3.js or extend `frappe-gantt` / `dhtmlx-gantt`
+  - Horizontal timeline with zoomable scale: day / week / month / quarter
+  - Drag-to-resize task bars (admin only)
+  - Drag-to-reorder and nest subtasks (admin only)
+  - Dependency arrows between tasks (finish-to-start, start-to-start)
+  - Critical path highlighting
+- **Visual Design:**
+  - Color-coded by: status (not started, in progress, completed, blocked, delayed)
+  - Progress fill inside each bar (percentage-based gradient)
+  - Today marker (vertical red line) with pulse animation
+  - Milestone diamonds on the timeline
+  - Smooth pan and zoom with trackpad/mouse support
+- **Interactivity:**
+  - Click task → slide-out detail panel: description, assignee, dates, dependencies, comments
+  - Filter by: milestone, assignee, status, date range
+  - Toggle between Gantt view and Kanban board view
+  - Minimap navigator for large projects
+- **Data Layer:**
+  - Tasks linked to milestones and project
+  - Real-time updates via WebSocket (admin edits → client sees live)
+  - Export as PNG/PDF
+
+**Deliverable:** A rich, interactive Gantt chart that gives clients full visibility into their project roadmap.
+
+---
+
+## PHASE 9 — Current Progress Tracker with Comments
+
+**Duration:** 4–5 days
+
+- **Progress Dashboard:**
+  - Large radial progress ring (animated on load) showing overall project completion
+  - Breakdown cards: Design %, Development %, Testing %, Deployment %
+  - Weekly progress sparkline chart (last 8 weeks trend)
+  - Status badge: `On Track` / `At Risk` / `Delayed` / `Completed`
+- **Progress Updates Feed:**
+  - Timeline-style feed of updates posted by Hapkonic team
+  - Each update: date, author avatar, description, attached screenshots/files, percentage bump
+  - Rich text editor for admin to post updates (Markdown + image embed)
+- **Comment System:**
+  - Threaded comments on each progress update
+  - @mention support for team members
+  - Real-time via Socket.io (typing indicator, instant delivery)
+  - Emoji reactions on comments
+  - Edit/delete own comments (with "edited" label)
+- **Notifications:**
+  - In-app + email notification when new update or reply is posted
+
+**Deliverable:** Live progress dashboard with rich commenting for transparent client-provider communication.
+
+---
+
+## PHASE 10 — Historical Milestone Timeline with Interactive Popups
+
+**Duration:** 5–6 days
+
+- **Timeline Visualization:**
+  - Vertical alternating timeline (left-right zigzag) with scroll animations
+  - Each milestone node: icon, title, date, status indicator, mini description
+  - Connecting line animates as you scroll down (drawing effect)
+  - Status colors: completed (green pulse), current (blue glow), upcoming (gray)
+  - Parallax depth on milestone cards during scroll
+- **Clickable Popup Detail:**
+  - Click milestone → modal/drawer slides in with full details:
+    - Description, deliverables, attached files/screenshots
+    - Completion date vs target date comparison
+    - Who marked it complete
+  - **Conversation Thread:**
+    - Client and Hapkonic team can exchange messages within each milestone
+    - Threaded replies, file attachments, timestamps
+    - Unread indicator badge on milestone nodes
+    - "Resolve" button to close a conversation thread
+- **Historical View:**
+  - Filter by: all, completed, in-progress, upcoming
+  - Search milestones by keyword
+  - Print/export timeline as PDF
+- **Animations:**
+  - Staggered entrance for each node on first scroll
+  - Subtle floating particles connecting milestone nodes
+  - Celebration confetti animation when all milestones are completed
+
+**Deliverable:** Beautiful sequential milestone timeline with built-in client-provider conversation per milestone.
+
+---
+
+## PHASE 11 — Invoice Management & Payment Reminders (No Payment Gateway)
+
+**Duration:** 4–5 days
+
+- **Invoice Dashboard (Client side):**
+  - Summary cards at top: Total Paid, Outstanding, Overdue, Next Due
+  - Invoice table: invoice #, amount, date, due date, status, actions
+  - Status badges: `Paid`, `Pending`, `Overdue`, `Partially Paid`
+  - Click row → invoice detail with line items and admin notes
+  - Download invoice PDF (uploaded by Hapkonic admin via Uploadthing)
+  - Payment info section: bank details / UPI ID displayed for manual payment
+- **Payment Reminders:**
+  - Automated reminders via Resend: 7 days before, on due date, 3 days after, 7 days after
+  - Channels: email + in-app notification
+  - Reminder history log visible to admin
+  - Gentle, branded reminder email templates (React Email)
+  - Snooze reminder option for client (delays next reminder by 3 days)
+- **Admin Invoice Management (in Admin Portal):**
+  - Upload PDF invoices per client via Uploadthing
+  - Set amount, due date, line item notes
+  - Manually update status: `Pending` → `Paid` / `Partially Paid` / `Overdue` / `Written Off`
+  - Add payment received date and notes when marking as paid
+  - Revenue overview: monthly/quarterly breakdown, outstanding aging report
+  - Bulk reminder trigger for all overdue invoices
+
+**Deliverable:** Clean invoice viewing for clients with PDF downloads, automated reminders, and full admin control — no payment gateway needed.
+
+---
+
+## PHASE 12 — Real-Time Notification System
+
+**Duration:** 3–4 days
+
+- **Notification Engine:**
+  - Socket.io powered real-time in-app notifications
+  - Notification bell with unread count badge (animated bounce on new)
+  - Dropdown panel: grouped by today, this week, earlier
+  - Types: meeting reminder, new document, progress update, new comment, payment due, milestone reached
+- **Notification Preferences:**
+  - Per-channel toggle: in-app, email, SMS
+  - Per-type toggle: choose which events trigger notifications
+  - Quiet hours setting
+- **Email Notifications:**
+  - Beautiful branded HTML email templates (MJML or React Email)
+  - Unsubscribe link in every email
+  - Digest option: receive daily summary instead of individual emails
+- **Push Notifications (PWA):**
+  - Service worker registration
+  - Push subscription management
+  - Works even when tab is closed
+
+**Deliverable:** Multi-channel notification system ensuring clients never miss an update.
+
+---
+
+## PHASE 13 — Search, Filtering & Global Navigation
+
+**Duration:** 3–4 days
+
+- **Global Command Palette:**
+  - `Cmd+K` / `Ctrl+K` to open spotlight search
+  - Search across: documents, milestones, meetings, invoices, comments
+  - Recent searches, suggested actions
+  - Keyboard navigation (arrow keys + enter)
+- **Sidebar Navigation:**
+  - Collapsible sidebar with animated icons
+  - Active route indicator with slide animation
+  - Quick-access pinned items
+  - Project switcher dropdown (for clients with multiple projects)
+- **Breadcrumbs & Context:**
+  - Dynamic breadcrumb trail on every page
+  - Contextual back button with route history
+- **Advanced Filtering:**
+  - Unified filter bar component used across all list views
+  - Date range picker, multi-select dropdowns, search input
+  - Save filter presets
+
+**Deliverable:** Seamless navigation and search that makes finding anything instant.
+
+---
+
+## PHASE 14 — Mobile Responsiveness & PWA
+
+**Duration:** 4–5 days
+
+- **Responsive Redesign:**
+  - Mobile-first breakpoints for every page
+  - Bottom tab navigation on mobile (replacing sidebar)
+  - Touch-optimized: swipe gestures, larger tap targets, pull-to-refresh
+  - Gantt chart → horizontal scroll with pinch-to-zoom on mobile
+  - Timeline → single-column vertical stack on mobile
+  - Document viewer → full-screen overlay on mobile
+- **Progressive Web App:**
+  - Service worker for offline caching (static assets + last-viewed data)
+  - Installable on home screen (manifest.json)
+  - Splash screen with Hapkonic branding
+  - Offline fallback page with cached data indicator
+- **Performance:**
+  - Lazy load all routes (React.lazy + Suspense)
+  - Image optimization (WebP + srcset)
+  - Skeleton loading states for every data-fetching component
+  - Target: Lighthouse score > 90 across all categories
+
+**Deliverable:** Fully responsive, installable PWA that works beautifully on every screen size.
+
+---
+
+## PHASE 15 — Security Hardening & Audit
+
+**Duration:** 3–4 days
+
+- **Authentication Security:**
+  - Implement 2FA (TOTP via authenticator app)
+  - Session timeout with configurable idle duration
+  - IP allowlisting option for enterprise clients
+  - Audit log: every login, failed attempt, password change
+- **API Security:**
+  - Input sanitization on all endpoints (express-validator / zod)
+  - SQL injection prevention (Prisma parameterized queries)
+  - XSS prevention (CSP headers, output encoding)
+  - CSRF protection for cookie-based auth
+  - Rate limiting per endpoint with Upstash Redis (free tier)
+- **Data Security:**
+  - Encrypt sensitive fields at rest (AES-256)
+  - TLS 1.3 enforced for all connections (Neon enforces SSL by default)
+  - Database backups: Neon built-in point-in-time recovery (7-day history on free)
+  - GDPR-ready: data export and deletion endpoints
+- **Penetration Testing:**
+  - Run OWASP ZAP automated scan
+  - Manual testing of auth flows, file uploads, API boundaries
+  - Fix all critical and high-severity findings
+
+**Deliverable:** Hardened, audited portal ready for production with enterprise-grade security.
+
+---
+
+## PHASE 16 — Analytics & Admin Dashboard
+
+**Duration:** 4–5 days
+
+- **Client Engagement Analytics:**
+  - Login frequency heatmap
+  - Most viewed documents
+  - Average time on portal per session
+  - Comment activity trends
+- **Project Health Dashboard (Admin):**
+  - All projects overview: status, progress, health score
+  - Overdue tasks and milestones flagged
+  - Client satisfaction indicators (based on comment sentiment)
+  - Revenue pipeline: upcoming invoices, overdue amounts
+- **Charts & Visualizations:**
+  - Recharts / D3.js powered interactive charts
+  - Exportable as PNG/CSV
+  - Date range selector for all analytics
+- **Automated Reports:**
+  - Weekly project summary auto-generated and emailed to admin
+  - Monthly client activity report
+
+**Deliverable:** Data-driven admin dashboard for monitoring client engagement and project health.
+
+---
+
+## PHASE 17 — Testing & Quality Assurance
+
+**Duration:** 5–6 days
+
+- **Unit Tests:**
+  - Jest + React Testing Library for all components
+  - API endpoint tests with Supertest
+  - Minimum 80% code coverage target
+- **Integration Tests:**
+  - Auth flow end-to-end
+  - Document upload → view → download flow
+  - Google Calendar sync flow
+  - Invoice upload → view → download flow
+- **E2E Tests:**
+  - Playwright for critical user journeys:
+    - Client login → view dashboard → check documents → view roadmap → download invoice
+    - Admin create client → upload docs → set milestones → create invoice
+- **Performance Tests:**
+  - Load testing with k6 (100 concurrent users)
+  - Database query optimization (slow query log analysis)
+  - Frontend bundle analysis and code splitting
+- **Accessibility:**
+  - WCAG 2.1 AA compliance audit
+  - Screen reader testing
+  - Keyboard navigation for all interactive elements
+
+**Deliverable:** Fully tested application with automated test suite and CI integration.
+
+---
+
+## PHASE 18 — Deployment & DevOps
+
+**Duration:** 3–4 days
+
+- **Infrastructure (100% Free Tier):**
+  - Frontend: Vercel free tier (auto-deploy from `main` branch)
+  - Backend: Render free tier (750 hrs/mo, auto-sleep on idle)
+  - Database: **Neon PostgreSQL** (0.5 GB, auto-suspend, branching for staging)
+  - File Storage: Uploadthing (2 GB free, built-in CDN)
+  - Redis: Upstash free tier (10K commands/day — rate limiting, caching, sessions)
+  - Email: Resend free tier (3,000 emails/mo — notifications, reminders)
+  - DNS/CDN: Cloudflare free plan (DNS, SSL, caching, DDoS protection)
+- **Neon-Specific Setup:**
+  - `main` branch → production database
+  - `dev` branch → development (instant branching, no extra cost)
+  - `staging` branch → created per PR for preview environments
+  - Enable auto-suspend (scales to zero when idle — saves compute hours)
+  - Connection string via Neon console → Prisma `DATABASE_URL`
+- **CI/CD Pipeline:**
+  - GitHub Actions: lint → test → build → deploy
+  - Staging environment with preview URLs per PR
+  - Production deploy requires manual approval
+  - Database migrations run automatically on deploy
+- **Monitoring (All Free):**
+  - Error tracking: Sentry free tier (5K events/mo)
+  - Uptime monitoring: UptimeRobot free (50 monitors, 5-min intervals)
+  - Log aggregation: Axiom free tier (500 GB ingest/mo) or Better Stack free
+  - Performance monitoring: Vercel Analytics (free with Vercel) + Neon dashboard
+  - Database monitoring: Neon built-in query insights + connection metrics
+- **Domain & SSL:**
+  - Custom domain: `portal.hapkonic.com`
+  - Auto-renewing SSL via Cloudflare
+  - WWW → non-WWW redirect
+
+**Deliverable:** Production-deployed portal with monitoring, alerting, and zero-downtime deployments.
+
+---
+
+## PHASE 19 — Client Onboarding & Documentation
+
+**Duration:** 3–4 days
+
+- **Client Onboarding Flow:**
+  - First-login welcome walkthrough (guided tour with tooltips)
+  - Interactive feature highlights using driver.js or similar
+  - Skip option + "Show me again" in settings
+- **Help Center:**
+  - In-app help widget (FAQ + search)
+  - Short video walkthroughs for each major feature
+  - Contextual help tooltips on complex UI elements
+- **Admin Documentation:**
+  - Complete API documentation (Swagger/OpenAPI)
+  - Admin user guide: how to onboard clients, manage projects, create invoices
+  - Deployment runbook: how to redeploy, rollback, troubleshoot
+- **Client-Facing Docs:**
+  - "How to view documents"
+  - "How to check your project progress"
+  - "How to view and download invoices"
+  - "How to join scheduled meetings"
+
+**Deliverable:** Smooth onboarding experience with comprehensive documentation for all user types.
+
+---
+
+## PHASE 20 — Launch, Feedback & Iteration
+
+**Duration:** Ongoing
+
+- **Soft Launch:**
+  - Invite 2–3 pilot clients for beta access
+  - Collect feedback via in-app feedback widget (emoji rating + text)
+  - Monitor error rates, performance, and engagement during beta
+- **Feedback Loop:**
+  - Weekly feedback review sessions
+  - Prioritize and fix critical issues within 24h
+  - Feature request board (visible to clients with upvoting)
+- **Hard Launch:**
+  - Migrate all active clients to portal
+  - Send branded launch announcement email
+  - Social media and website announcement
+- **Post-Launch Iteration:**
+  - Monthly feature updates based on feedback
+  - Quarterly security audit
+  - Annual UX review and refresh
+- **Future Roadmap Ideas:**
+  - AI-powered project health predictions
+  - Client-side file upload and sharing
+  - Multi-language support (i18n)
+  - White-label option for sub-agencies
+  - Native mobile app (React Native)
+
+**Deliverable:** Live, production portal with continuous improvement pipeline.
+
+---
+
+## Timeline Summary
+
+| Phase | Name | Duration |
+|---|---|---|
+| 1 | Project Scaffolding & Design System | 3–4 days |
+| 2 | Database Schema & API Foundation | 4–5 days |
+| 3 | Hapkonic Admin Portal (Full Control Center) | 5–6 days |
+| 4 | Authentication System & Login Page | 3–4 days |
+| 5 | Landing Page with Scroll Animations & 3D | 5–7 days |
+| 6 | Document Vault | 4–5 days |
+| 7 | Meeting Scheduler + Google Calendar | 4–5 days |
+| 8 | Interactive Gantt Chart / Roadmap | 6–7 days |
+| 9 | Current Progress Tracker + Comments | 4–5 days |
+| 10 | Historical Milestone Timeline + Popups | 5–6 days |
+| 11 | Invoice Management & Payment Reminders | 4–5 days |
+| 12 | Real-Time Notification System | 3–4 days |
+| 13 | Search, Filtering & Navigation | 3–4 days |
+| 14 | Mobile Responsiveness & PWA | 4–5 days |
+| 15 | Security Hardening & Audit | 3–4 days |
+| 16 | Analytics & Admin Dashboard | 4–5 days |
+| 17 | Testing & Quality Assurance | 5–6 days |
+| 18 | Deployment & DevOps | 3–4 days |
+| 19 | Client Onboarding & Documentation | 3–4 days |
+| 20 | Launch, Feedback & Iteration | Ongoing |
+
+> **Estimated Total: ~80–95 working days (4–5 months with a small team)**
+
+---
+
+## 💰 Monthly Infrastructure Cost: $0
+
+| Service | Plan | Monthly Cost |
+|---|---|---|
+| Neon PostgreSQL | Free (0.5 GB, 190 compute hrs) | $0 |
+| Uploadthing | Free (2 GB storage, 2 GB bandwidth) | $0 |
+| Vercel | Free (100 GB bandwidth) | $0 |
+| Render | Free (750 hrs/mo) | $0 |
+| Upstash Redis | Free (10K commands/day) | $0 |
+| Resend | Free (3,000 emails/mo) | $0 |
+| Sentry | Free (5K events/mo) | $0 |
+| UptimeRobot | Free (50 monitors) | $0 |
+| Cloudflare DNS/CDN | Free | $0 |
+| Google Calendar API | Free | $0 |
+| **TOTAL** | | **$0/mo** |
+
+> ⚠️ **Scale Note:** This $0 stack comfortably supports ~50–100 active clients. When you outgrow free tiers, Neon Pro starts at $19/mo, Uploadthing Pro at $10/mo, and Render at $7/mo — total under $40/mo for serious scale. All services work perfectly in India.
+
+---
+
+*Built with precision by Hapkonic Software Agency — where code meets craft.*

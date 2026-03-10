@@ -33,7 +33,7 @@ Completed: 4 / 20 phases  [████░░░░░░░░░░░░░�
 | 02  | Database Schema & API Foundation              | Completed   | 100%     | 4–5 days  | [phase-02.md](phase-02.md)     |
 | 03  | Hapkonic Admin Portal                         | Completed   | 100%       | 5–6 days  | [phase-03.md](phase-03.md)     |
 | 04  | Authentication System & Login Page            | Completed   | 100%       | 3–4 days  | [phase-04.md](phase-04.md)     |
-| 05  | Landing Page with Scroll Animations & 3D      | Not Started | 0%       | 5–7 days  | [phase-05.md](phase-05.md)     |
+| 05  | Landing Page with Scroll Animations & 3D      | [x] Completed | 100%       | 5–7 days  | [phase-05.md](phase-05.md)     |
 | 06  | Document Vault                                | Not Started | 0%       | 4–5 days  | [phase-06.md](phase-06.md)     |
 | 07  | Meeting Scheduler + Google Calendar Sync      | Not Started | 0%       | 4–5 days  | [phase-07.md](phase-07.md)     |
 | 08  | Interactive Gantt Chart / Roadmap             | Not Started | 0%       | 6–7 days  | [phase-08.md](phase-08.md)     |
@@ -54,7 +54,7 @@ Completed: 4 / 20 phases  [████░░░░░░░░░░░░░�
 
 ## Active Phase
 
-> **Next:** [Phase 05 — Landing Page with Scroll Animations & 3D](phase-05.md)
+> **Next:** [Phase 06 — Document Vault](phase-06.md)
 
 ---
 
