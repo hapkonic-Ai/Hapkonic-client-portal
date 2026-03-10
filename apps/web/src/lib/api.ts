@@ -21,8 +21,9 @@ export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed'
 export type MilestoneStatus = 'upcoming' | 'in_progress' | 'completed' | 'at_risk' | 'delayed'
 export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked'
 export type DocumentCategory =
-  | 'contract' | 'proposal' | 'invoice' | 'design_asset' | 'technical_spec'
-  | 'report' | 'presentation' | 'legal' | 'nda' | 'receipt' | 'other'
+  | 'contracts' | 'proposals' | 'design_assets' | 'technical_specs' | 'meeting_notes'
+  | 'invoices_financials' | 'progress_reports' | 'test_reports' | 'deployment_guides'
+  | 'legal' | 'miscellaneous'
 export type InvoiceStatus = 'pending' | 'paid' | 'overdue' | 'partially_paid' | 'written_off'
 export type MeetingType = 'kickoff' | 'review' | 'standup' | 'demo' | 'ad_hoc'
 
@@ -99,18 +100,18 @@ export interface Project {
 
 export interface Document {
   id: string
-  projectId?: string
-  clientId: string
-  name: string
-  url: string
+  projectId: string
+  label: string
+  fileUrl: string
+  fileKey: string
   category: DocumentCategory
-  size: number
-  mimeType: string
+  fileSize?: number
+  mimeType?: string
+  thumbnailUrl?: string
   uploadedById: string
+  uploadedAt: string
   viewedAt?: string
   downloadedAt?: string
-  version: number
-  createdAt: string
   project?: { id: string; name: string }
   uploadedBy?: { id: string; name: string }
 }
@@ -360,12 +361,12 @@ export const documentsApi = {
   },
   get: (id: string) => api.get<{ document: Document }>(`/documents/${id}`),
   create: (data: {
-    projectId?: string; clientId: string; name: string
-    url: string; fileKey?: string; category: DocumentCategory
-    size: number; mimeType: string
+    projectId: string; label: string; fileUrl: string
+    fileKey: string; category: DocumentCategory
+    fileSize?: number; mimeType?: string
   }) => api.post<{ document: Document }>('/documents', data),
   delete: (id: string) => api.delete<void>(`/documents/${id}`),
-  download: (id: string) => api.post<{ url: string }>(`/documents/${id}/download`),
+  download: (id: string) => api.post<{ fileUrl: string }>(`/documents/${id}/download`),
 }
 
 // ── Meetings ──────────────────────────────────────────────────────────────────

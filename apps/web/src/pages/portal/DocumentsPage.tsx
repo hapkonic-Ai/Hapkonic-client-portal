@@ -12,21 +12,24 @@ import { Badge } from '../../components/ui/Badge'
 import { formatDate } from '../../lib/utils'
 
 const CATEGORIES: DocumentCategory[] = [
-  'contract', 'proposal', 'invoice', 'design_asset', 'technical_spec',
-  'report', 'presentation', 'legal', 'nda', 'receipt', 'other',
+  'contracts', 'proposals', 'design_assets', 'technical_specs', 'meeting_notes',
+  'invoices_financials', 'progress_reports', 'test_reports', 'deployment_guides',
+  'legal', 'miscellaneous',
 ]
 
 function categoryLabel(cat: DocumentCategory) {
   return cat.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-function fileSize(bytes: number) {
+function fileSizeLabel(bytes?: number) {
+  if (!bytes) return '—'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function FileIcon({ mimeType, size = 20 }: { mimeType: string; size?: number }) {
+function FileIcon({ mimeType, size = 20 }: { mimeType?: string; size?: number }) {
+  if (!mimeType) return <File size={size} />
   if (mimeType.startsWith('image/')) return <FileImage size={size} />
   if (mimeType.includes('pdf')) return <FileText size={size} />
   if (mimeType.includes('zip') || mimeType.includes('archive')) return <FileArchive size={size} />
@@ -43,7 +46,7 @@ function docStatus(doc: Document): { label: string; color: string } {
 // ── Document Viewer ───────────────────────────────────────────────────────────
 
 function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }) {
-  const canPreview = doc.mimeType.includes('pdf') || doc.mimeType.startsWith('image/')
+  const canPreview = doc.mimeType?.includes('pdf') || doc.mimeType?.startsWith('image/')
 
   return (
     <motion.div
@@ -62,14 +65,14 @@ function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }
             <FileIcon mimeType={doc.mimeType} size={18} />
           </div>
           <div>
-            <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{doc.name}</p>
+            <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{doc.label}</p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {categoryLabel(doc.category)} · {fileSize(doc.size)} · v{doc.version}
+              {categoryLabel(doc.category)} · {fileSizeLabel(doc.fileSize)}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href={doc.url} download target="_blank" rel="noopener noreferrer">
+          <a href={doc.fileUrl} download target="_blank" rel="noopener noreferrer">
             <Button size="sm" leftIcon={<Download size={14} />}>Download</Button>
           </a>
           <Button variant="ghost" size="icon" onClick={onClose}><X size={18} /></Button>
@@ -78,15 +81,15 @@ function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }
 
       <div className="flex-1 overflow-auto p-4">
         {canPreview ? (
-          doc.mimeType.startsWith('image/') ? (
+          doc.mimeType?.startsWith('image/') ? (
             <div className="flex items-center justify-center h-full">
-              <img src={doc.url} alt={doc.name} className="max-w-full max-h-full object-contain rounded-xl" />
+              <img src={doc.fileUrl} alt={doc.label} className="max-w-full max-h-full object-contain rounded-xl" />
             </div>
           ) : (
             <iframe
-              src={`${doc.url}#toolbar=0`}
+              src={`${doc.fileUrl}#toolbar=0`}
               className="w-full h-full rounded-xl"
-              title={doc.name}
+              title={doc.label}
               style={{ minHeight: '70vh', background: '#fff' }}
             />
           )
@@ -96,7 +99,7 @@ function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }
               <FileIcon mimeType={doc.mimeType} size={40} />
             </div>
             <p style={{ color: 'var(--text-secondary)' }}>Preview not available for this file type.</p>
-            <a href={doc.url} download target="_blank" rel="noopener noreferrer">
+            <a href={doc.fileUrl} download target="_blank" rel="noopener noreferrer">
               <Button leftIcon={<Download size={16} />}>Download to view</Button>
             </a>
           </div>
@@ -108,7 +111,7 @@ function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }
         style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-default)', color: 'var(--text-muted)' }}
       >
         {doc.project && <span>Project: <span style={{ color: 'var(--text-secondary)' }}>{doc.project.name}</span></span>}
-        <span>Uploaded: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(doc.createdAt)}</span></span>
+        <span>Uploaded: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(doc.uploadedAt)}</span></span>
         {doc.viewedAt && <span>Viewed: <span style={{ color: 'var(--text-secondary)' }}>{formatDate(doc.viewedAt)}</span></span>}
         {doc.uploadedBy && <span>By: <span style={{ color: 'var(--text-secondary)' }}>{doc.uploadedBy.name}</span></span>}
       </div>
@@ -144,13 +147,13 @@ function DocumentCard({ doc, onView, onDownload, index }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm leading-tight line-clamp-2" style={{ color: 'var(--text-primary)' }}>
-            {doc.name}
+            {doc.label}
           </p>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{categoryLabel(doc.category)}</p>
         </div>
         <div className="flex items-center justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
-          <span>{fileSize(doc.size)}</span>
-          <span>{formatDate(doc.createdAt)}</span>
+          <span>{fileSizeLabel(doc.fileSize)}</span>
+          <span>{formatDate(doc.uploadedAt)}</span>
         </div>
         <div
           className="flex gap-2 pt-2 border-t opacity-0 group-hover:opacity-100 transition-opacity"
@@ -189,14 +192,14 @@ function DocumentRow({ doc, onView, onDownload, index }: {
         <div className="flex items-center gap-3">
           <div style={{ color: 'var(--color-primary-500)' }}><FileIcon mimeType={doc.mimeType} size={16} /></div>
           <div>
-            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{doc.name}</p>
+            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{doc.label}</p>
             {doc.project && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{doc.project.name}</p>}
           </div>
         </div>
       </td>
       <td className="px-4 py-3"><Badge variant="neutral" size="sm">{categoryLabel(doc.category)}</Badge></td>
-      <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{fileSize(doc.size)}</td>
-      <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(doc.createdAt)}</td>
+      <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{fileSizeLabel(doc.fileSize)}</td>
+      <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(doc.uploadedAt)}</td>
       <td className="px-4 py-3"><span className="text-xs font-medium" style={{ color }}>{label}</span></td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-1 justify-end" onClick={e => e.stopPropagation()}>
@@ -230,7 +233,7 @@ export default function DocumentsPage() {
     const q = search.toLowerCase()
     setFiltered(documents.filter(d => {
       const matchCat = catFilter === 'all' || d.category === catFilter
-      const matchSearch = d.name.toLowerCase().includes(q) || (d.project?.name ?? '').toLowerCase().includes(q)
+      const matchSearch = (d.label ?? '').toLowerCase().includes(q) || (d.project?.name ?? '').toLowerCase().includes(q)
       return matchCat && matchSearch
     }))
   }, [search, catFilter, documents])
@@ -245,14 +248,14 @@ export default function DocumentsPage() {
 
   async function handleDownload(doc: Document) {
     try {
-      const { url } = await documentsApi.download(doc.id)
+      const { fileUrl } = await documentsApi.download(doc.id)
       const a = window.document.createElement('a')
-      a.href = url ?? doc.url; a.download = doc.name; a.target = '_blank'
+      a.href = fileUrl ?? doc.fileUrl; a.download = doc.label; a.target = '_blank'
       window.document.body.appendChild(a); a.click(); window.document.body.removeChild(a)
       setDocuments(prev => prev.map(d =>
         d.id === doc.id ? { ...d, downloadedAt: new Date().toISOString(), viewedAt: d.viewedAt ?? new Date().toISOString() } : d
       ))
-    } catch { window.open(doc.url, '_blank') }
+    } catch { window.open(doc.fileUrl, '_blank') }
   }
 
   const newCount = documents.filter(d => !d.viewedAt).length
