@@ -1,9 +1,9 @@
 # Phase 16 — Analytics & Admin Dashboard
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 4–5 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,41 +18,41 @@ Build a data-driven admin analytics dashboard: client engagement heatmaps, proje
 ## Tasks
 
 ### Client Engagement Analytics
-- [ ] Login frequency heatmap: per-client calendar heatmap (days × activity level)
-- [ ] Most viewed documents: ranked list with view count bars
-- [ ] Average session duration per client (chart over last 30 days)
-- [ ] Comment activity trend: line chart showing comment volume over time
-- [ ] Last active date per client (highlight clients not logged in > 14 days)
+- [x] Login frequency heatmap: per-client calendar heatmap (days × activity level)
+- [x] Most viewed documents: ranked list with view count bars
+- [x] Average session duration per client (chart over last 30 days)
+- [x] Comment activity trend: line chart showing comment volume over time
+- [x] Last active date per client (highlight clients not logged in > 14 days)
 
 ### Project Health Dashboard
-- [ ] All-projects overview table: name, client, status, progress %, health score
-- [ ] Health score calculation: based on overdue tasks, delayed milestones, client inactivity
-- [ ] Health badge: Healthy (green), At Risk (yellow), Critical (red)
-- [ ] Overdue tasks list: tasks past due date, sorted by days overdue
-- [ ] Overdue milestones list: milestones past target date
-- [ ] Client satisfaction indicators (comment volume, response rate)
+- [x] All-projects overview table: name, client, status, progress %, health score
+- [x] Health score calculation: based on overdue tasks, delayed milestones, client inactivity
+- [x] Health badge: Healthy (green), At Risk (yellow), Critical (red)
+- [x] Overdue tasks list: tasks past due date, sorted by days overdue
+- [x] Overdue milestones list: milestones past target date
+- [x] Client satisfaction indicators (comment volume, response rate)
 
 ### Revenue Pipeline
-- [ ] Upcoming invoices: list of invoices due in next 30 days
-- [ ] Overdue amounts: total + per-client breakdown
-- [ ] Outstanding aging report: 0–30, 31–60, 61–90, 90+ day columns (Recharts BarChart)
-- [ ] Monthly revenue chart: paid vs outstanding per month (last 12 months)
-- [ ] Quarterly summary numbers: total invoiced, collected, outstanding
+- [x] Upcoming invoices: list of invoices due in next 30 days
+- [x] Overdue amounts: total + per-client breakdown
+- [x] Outstanding aging report: 0–30, 31–60, 61–90, 90+ day columns (Recharts BarChart)
+- [x] Monthly revenue chart: paid vs outstanding per month (last 12 months)
+- [x] Quarterly summary numbers: total invoiced, collected, outstanding
 
 ### Charts & Visualizations
-- [ ] All charts use Recharts (BarChart, LineChart, AreaChart, PieChart as needed)
-- [ ] Charts are interactive: hover tooltips, click to drill down
-- [ ] Exportable as PNG (html2canvas) and CSV download
-- [ ] Date range selector applied globally to analytics views (last 7d / 30d / 90d / custom)
-- [ ] Charts are responsive (Recharts `ResponsiveContainer`)
+- [x] All charts use Recharts (BarChart, LineChart, AreaChart, PieChart as needed)
+- [x] Charts are interactive: hover tooltips, click to drill down
+- [x] Exportable as PNG (html2canvas) and CSV download
+- [x] Date range selector applied globally to analytics views (last 7d / 30d / 90d / custom)
+- [x] Charts are responsive (Recharts `ResponsiveContainer`)
 
 ### Automated Reports
-- [ ] Weekly project summary email (every Monday): sent to all admin users
-  - [ ] All project statuses, overdue items, new documents, upcoming meetings
-  - [ ] React Email template with Hapkonic branding
-- [ ] Monthly client activity report (1st of each month): per-client login, document views, comment activity
-- [ ] Reports sent via Resend
-- [ ] Admin can manually trigger any report
+- [x] Weekly project summary email (every Monday): sent to all admin users
+  - [x] All project statuses, overdue items, new documents, upcoming meetings
+  - [x] React Email template with Hapkonic branding
+- [x] Monthly client activity report (1st of each month): per-client login, document views, comment activity
+- [x] Reports sent via Resend
+- [x] Admin can manually trigger any report
 
 ---
 

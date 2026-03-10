@@ -3,6 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useCommandPalette } from '@/components/CommandPalette'
 
 interface TopbarProps {
   sidebarCollapsed?: boolean
@@ -13,6 +14,7 @@ export function Topbar({ isAdmin }: TopbarProps) {
   const { theme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { setOpen: openCommandPalette } = useCommandPalette()
 
   const handleLogout = async () => {
     await logout()
@@ -29,9 +31,7 @@ export function Topbar({ isAdmin }: TopbarProps) {
     >
       {/* Left: Search shortcut */}
       <button
-        onClick={() => {
-          /* command palette — Phase 13 */
-        }}
+        onClick={() => openCommandPalette(true)}
         className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors hover:bg-[var(--bg-elevated)]"
         style={{
           color: 'var(--text-muted)',

@@ -1,9 +1,9 @@
 # Phase 13 — Search, Filtering & Global Navigation
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 3–4 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,43 +18,43 @@ Build a Cmd+K global command palette for instant cross-resource search, a polish
 ## Tasks
 
 ### Global Command Palette (Cmd+K / Ctrl+K)
-- [ ] Keyboard shortcut registers globally (`useEffect` with keydown listener)
-- [ ] Full-screen overlay with centered search input (backdrop blur)
-- [ ] Search across: documents, milestones, meetings, invoices, comments, projects
-- [ ] Results grouped by type with icon indicators
-- [ ] Recent searches shown when input is empty
-- [ ] Suggested actions: "Go to Dashboard", "View Invoices", "Open Roadmap", etc.
-- [ ] Keyboard navigation: arrow up/down to select, Enter to navigate, Esc to close
-- [ ] Highlight matching text in results
-- [ ] Debounced API search (300ms) for real-time results
+- [x] Keyboard shortcut registers globally (`useEffect` with keydown listener)
+- [x] Full-screen overlay with centered search input (backdrop blur)
+- [x] Search across: documents, milestones, meetings, invoices, comments, projects
+- [x] Results grouped by type with icon indicators
+- [x] Recent searches shown when input is empty
+- [x] Suggested actions: "Go to Dashboard", "View Invoices", "Open Roadmap", etc.
+- [x] Keyboard navigation: arrow up/down to select, Enter to navigate, Esc to close
+- [x] Highlight matching text in results
+- [x] Debounced API search (300ms) for real-time results
 
 ### Sidebar Navigation
-- [ ] Collapsible sidebar: expanded (with labels) ↔ icon-only mode
-- [ ] Toggle button (chevron) with smooth width transition animation
-- [ ] Active route indicator: animated sliding pill/bar behind active nav item
-- [ ] Icon animations on hover (subtle scale or color transition)
-- [ ] Quick-access pinned items section (user can pin any page)
-- [ ] Project switcher dropdown at top of sidebar (for clients with multiple projects)
-- [ ] Sidebar state persisted in localStorage
+- [x] Collapsible sidebar: expanded (with labels) ↔ icon-only mode
+- [x] Toggle button (chevron) with smooth width transition animation
+- [x] Active route indicator: animated sliding pill/bar behind active nav item
+- [x] Icon animations on hover (subtle scale or color transition)
+- [x] Quick-access pinned items section (user can pin any page)
+- [x] Project switcher dropdown at top of sidebar (for clients with multiple projects)
+- [x] Sidebar state persisted in localStorage
 
 ### Breadcrumbs
-- [ ] Dynamic breadcrumb trail on every page (auto-generated from route)
-- [ ] Clickable intermediate crumbs
-- [ ] Truncate long labels on mobile
+- [x] Dynamic breadcrumb trail on every page (auto-generated from route)
+- [x] Clickable intermediate crumbs
+- [x] Truncate long labels on mobile
 
 ### Contextual Navigation
-- [ ] Back button with route history (uses browser history, not hardcoded paths)
-- [ ] "Back to project" button on deep pages (document, milestone, meeting detail)
+- [x] Back button with route history (uses browser history, not hardcoded paths)
+- [x] "Back to project" button on deep pages (document, milestone, meeting detail)
 
 ### Unified Filter Bar Component
-- [ ] Reusable `<FilterBar>` component used in: documents, invoices, meetings, milestones, tasks, admin logs
-- [ ] Date range picker (start + end date)
-- [ ] Multi-select dropdown filters (category, status, assignee, etc. — configurable per page)
-- [ ] Text search input
-- [ ] Active filter chips: show applied filters, click X to remove individual filter
-- [ ] "Clear all filters" button
-- [ ] Save filter preset: name preset, persist to user profile (Upstash Redis or DB)
-- [ ] Load saved presets from dropdown
+- [x] Reusable `<FilterBar>` component used in: documents, invoices, meetings, milestones, tasks, admin logs
+- [x] Date range picker (start + end date)
+- [x] Multi-select dropdown filters (category, status, assignee, etc. — configurable per page)
+- [x] Text search input
+- [x] Active filter chips: show applied filters, click X to remove individual filter
+- [x] "Clear all filters" button
+- [x] Save filter preset: name preset, persist to user profile (Upstash Redis or DB)
+- [x] Load saved presets from dropdown
 
 ---
 

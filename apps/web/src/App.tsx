@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/guards/ProtectedRoute'
 import { PortalLayout } from '@/layouts/PortalLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { PageSkeleton } from '@/components/ui/PageSkeleton'
+import CommandPalette, { CommandPaletteProvider } from '@/components/CommandPalette'
 import {
   LandingPage,
   LoginPage,
@@ -103,9 +104,12 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Suspense fallback={<SuspenseFallback />}>
-          <AppRoutes />
-        </Suspense>
+        <CommandPaletteProvider>
+          <Suspense fallback={<SuspenseFallback />}>
+            <AppRoutes />
+          </Suspense>
+          <CommandPalette />
+        </CommandPaletteProvider>
       </AuthProvider>
     </ThemeProvider>
   )
