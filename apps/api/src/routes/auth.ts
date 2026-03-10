@@ -116,7 +116,18 @@ authRouter.post('/refresh', async (req, res, next) => {
 
     await redisSet(`refresh:${userId}`, newRefreshToken, 7 * 24 * 60 * 60)
     res.cookie('refreshToken', newRefreshToken, cookieOptions(7))
-    res.json({ accessToken: newAccessToken })
+    res.json({
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        clientId: user.clientId,
+        avatar: user.avatar,
+        forcePasswordReset: user.forcePasswordReset,
+      },
+    })
   } catch (err) {
     next(err)
   }

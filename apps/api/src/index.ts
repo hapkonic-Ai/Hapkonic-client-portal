@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
 import { createServer } from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import { apiRouter } from './routes'
@@ -39,6 +40,7 @@ app.use(
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(morgan('dev'))
+app.use(cookieParser())
 
 // ── Health check ──
 app.get('/health', (_req, res) => {
