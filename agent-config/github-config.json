@@ -1,0 +1,7 @@
+{
+  "user.name": "Harsh Raj A",
+  "user.email": "hraj20000@gmail.com",
+  "no_claude_coauthor": true,
+  "commit_message_footer": "",
+  "_note": "Read this file before every commit. Apply user.name and user.email via git config. Never add Co-Authored-By: Claude lines."
+}
