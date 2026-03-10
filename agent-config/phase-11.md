@@ -1,9 +1,9 @@
 # Phase 11 — Invoice Management & Payment Reminders
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 4–5 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,54 +18,54 @@ Build a clean invoice viewing experience for clients with PDF downloads and paym
 ## Tasks
 
 ### Client Invoice Dashboard
-- [ ] Summary cards at top: Total Paid, Outstanding, Overdue, Next Due Date
-- [ ] Invoice table: invoice #, amount, date issued, due date, status badge, actions
-- [ ] Status badges: Paid (green), Pending (yellow), Overdue (red), Partially Paid (orange)
-- [ ] Click row → invoice detail page/drawer
-- [ ] Invoice detail: line item notes, admin notes, payment history
-- [ ] Download invoice PDF button (generates signed URL from Uploadthing)
-- [ ] Payment info section: bank transfer details / UPI ID displayed clearly
-- [ ] Empty state when no invoices yet
+- [x] Summary cards at top: Total Paid, Outstanding, Overdue, Next Due Date
+- [x] Invoice table: invoice #, amount, date issued, due date, status badge, actions
+- [x] Status badges: Paid (green), Pending (yellow), Overdue (red), Partially Paid (orange)
+- [x] Click row → invoice detail page/drawer
+- [x] Invoice detail: line item notes, admin notes, payment history
+- [x] Download invoice PDF button (generates signed URL from Uploadthing)
+- [x] Payment info section: bank transfer details / UPI ID displayed clearly
+- [x] Empty state when no invoices yet
 
 ### Admin Invoice Management
-- [ ] Upload PDF invoice per client (Uploadthing drag-and-drop)
-- [ ] Set invoice number, amount, due date, line item notes
-- [ ] Status management: Pending → Paid / Partially Paid / Overdue / Written Off
-- [ ] Add payment received date and notes when marking as paid
-- [ ] Add admin notes visible to client
-- [ ] Delete invoice with confirmation
+- [x] Upload PDF invoice per client (Uploadthing drag-and-drop)
+- [x] Set invoice number, amount, due date, line item notes
+- [x] Status management: Pending → Paid / Partially Paid / Overdue / Written Off
+- [x] Add payment received date and notes when marking as paid
+- [x] Add admin notes visible to client
+- [x] Delete invoice with confirmation
 
 ### Revenue Overview (Admin)
-- [ ] Monthly revenue chart (Recharts BarChart)
-- [ ] Quarterly breakdown
-- [ ] Outstanding aging report: 0–30, 31–60, 61–90, 90+ days columns
-- [ ] Total outstanding, total overdue, total paid this month — summary cards
+- [x] Monthly revenue chart (Recharts BarChart)
+- [x] Quarterly breakdown
+- [x] Outstanding aging report: 0–30, 31–60, 61–90, 90+ days columns
+- [x] Total outstanding, total overdue, total paid this month — summary cards
 
 ### Automated Payment Reminders
-- [ ] Schedule reminders via cron job (Upstash QStash or Node cron):
-  - [ ] 7 days before due date
-  - [ ] On due date
-  - [ ] 3 days after due date (overdue)
-  - [ ] 7 days after due date (overdue)
-- [ ] Email via Resend using React Email branded template
-- [ ] In-app notification (Phase 12 integration)
-- [ ] Log each reminder sent to `PaymentReminder` table
-- [ ] Do NOT send reminder for Paid or Written Off invoices
+- [x] Schedule reminders via cron job (Upstash QStash or Node cron):
+  - [x] 7 days before due date
+  - [x] On due date
+  - [x] 3 days after due date (overdue)
+  - [x] 7 days after due date (overdue)
+- [x] Email via Resend using React Email branded template
+- [x] In-app notification (Phase 12 integration)
+- [x] Log each reminder sent to `PaymentReminder` table
+- [x] Do NOT send reminder for Paid or Written Off invoices
 
 ### React Email Reminder Templates
-- [ ] "Upcoming payment" template (7 days / due date reminders)
-- [ ] "Payment overdue" template (3-day / 7-day overdue reminders)
-- [ ] Both include: invoice #, amount, due date, payment details, portal link
-- [ ] Hapkonic branding (logo, colors, footer)
+- [x] "Upcoming payment" template (7 days / due date reminders)
+- [x] "Payment overdue" template (3-day / 7-day overdue reminders)
+- [x] Both include: invoice #, amount, due date, payment details, portal link
+- [x] Hapkonic branding (logo, colors, footer)
 
 ### Client Snooze Option
-- [ ] "Snooze reminder" button on invoice detail (delays next reminder by 3 days)
-- [ ] Store snooze until date; reminder scheduler respects it
+- [x] "Snooze reminder" button on invoice detail (delays next reminder by 3 days)
+- [x] Store snooze until date; reminder scheduler respects it
 
 ### Bulk Reminder Trigger (Admin)
-- [ ] Admin can trigger reminders for all overdue invoices at once
-- [ ] Shows preview list before sending
-- [ ] Confirms count sent after trigger
+- [x] Admin can trigger reminders for all overdue invoices at once
+- [x] Shows preview list before sending
+- [x] Confirms count sent after trigger
 
 ---
 
