@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ProjectStatus, MilestoneStatus, TaskStatus, DocumentCategory, InvoiceStatus } from '@prisma/client'
+import { PrismaClient, Role, ProjectStatus, MilestoneStatus, TaskStatus, DocumentCategory, InvoiceStatus, MeetingType, NotificationType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -9,8 +9,9 @@ async function main() {
   // ── Clean slate ────────────────────────────────────────────────────────────
   await prisma.adminLog.deleteMany()
   await prisma.notification.deleteMany()
-  await prisma.progressReaction.deleteMany()
+  await prisma.progressCommentReaction.deleteMany()
   await prisma.progressComment.deleteMany()
+  await prisma.progressReaction.deleteMany()
   await prisma.progressUpdate.deleteMany()
   await prisma.paymentReminder.deleteMany()
   await prisma.invoice.deleteMany()
@@ -59,7 +60,6 @@ async function main() {
       contactName: 'Arjun Mehta',
       contactEmail: 'arjun@techventures.in',
       contactPhone: '+91 98765 43210',
-      website: 'https://techventures.in',
     },
   })
 
@@ -70,7 +70,6 @@ async function main() {
       contactName: 'Sneha Patel',
       contactEmail: 'sneha@retailedge.com',
       contactPhone: '+91 87654 32109',
-      website: 'https://retailedge.com',
     },
   })
 
@@ -81,7 +80,6 @@ async function main() {
       contactName: 'Dr. Rajesh Kumar',
       contactEmail: 'rajesh@healthfirst.io',
       contactPhone: '+91 76543 21098',
-      website: 'https://healthfirst.io',
     },
   })
 
@@ -131,14 +129,9 @@ async function main() {
       name: 'SaaS Platform MVP',
       description: 'Full-stack SaaS platform with subscription billing, dashboard, and API.',
       clientId: clientA.id,
-      status: ProjectStatus.in_progress,
+      status: ProjectStatus.active,
       startDate: new Date('2025-01-15'),
       endDate: new Date('2025-06-30'),
-      overallPct: 45,
-      designPct: 80,
-      devPct: 40,
-      testingPct: 10,
-      deployPct: 0,
     },
   })
 
@@ -150,11 +143,6 @@ async function main() {
       status: ProjectStatus.planning,
       startDate: new Date('2025-07-01'),
       endDate: new Date('2025-12-31'),
-      overallPct: 0,
-      designPct: 0,
-      devPct: 0,
-      testingPct: 0,
-      deployPct: 0,
     },
   })
 
@@ -163,14 +151,9 @@ async function main() {
       name: 'E-Commerce Redesign',
       description: 'Full redesign and rebuild of RetailEdge storefront with Headless Commerce.',
       clientId: clientB.id,
-      status: ProjectStatus.in_progress,
+      status: ProjectStatus.active,
       startDate: new Date('2025-02-01'),
       endDate: new Date('2025-08-31'),
-      overallPct: 30,
-      designPct: 70,
-      devPct: 20,
-      testingPct: 0,
-      deployPct: 0,
     },
   })
 
@@ -182,11 +165,6 @@ async function main() {
       status: ProjectStatus.completed,
       startDate: new Date('2024-06-01'),
       endDate: new Date('2024-12-31'),
-      overallPct: 100,
-      designPct: 100,
-      devPct: 100,
-      testingPct: 100,
-      deployPct: 100,
     },
   })
 
@@ -199,7 +177,7 @@ async function main() {
       title: 'UI/UX Design Complete',
       description: 'All wireframes, mockups, and design system finalized.',
       status: MilestoneStatus.completed,
-      dueDate: new Date('2025-02-28'),
+      targetDate: new Date('2025-02-28'),
       completedAt: new Date('2025-02-25'),
       order: 1,
     },
@@ -211,7 +189,7 @@ async function main() {
       title: 'Backend API v1',
       description: 'Core REST API with auth, billing, and data endpoints.',
       status: MilestoneStatus.in_progress,
-      dueDate: new Date('2025-04-30'),
+      targetDate: new Date('2025-04-30'),
       order: 2,
     },
   })
@@ -221,8 +199,8 @@ async function main() {
       projectId: projectA1.id,
       title: 'Frontend Integration',
       description: 'Connect React frontend to backend APIs.',
-      status: MilestoneStatus.upcoming,
-      dueDate: new Date('2025-06-15'),
+      status: MilestoneStatus.not_started,
+      targetDate: new Date('2025-06-15'),
       order: 3,
     },
   })
@@ -233,7 +211,7 @@ async function main() {
       title: 'Design System & Prototypes',
       description: 'New design tokens, component library, high-fidelity prototypes.',
       status: MilestoneStatus.completed,
-      dueDate: new Date('2025-03-15'),
+      targetDate: new Date('2025-03-15'),
       completedAt: new Date('2025-03-12'),
       order: 1,
     },
@@ -245,7 +223,7 @@ async function main() {
       title: 'Product Catalog & Search',
       description: 'Headless product catalog with Algolia-powered search.',
       status: MilestoneStatus.in_progress,
-      dueDate: new Date('2025-05-31'),
+      targetDate: new Date('2025-05-31'),
       order: 2,
     },
   })
@@ -282,15 +260,15 @@ async function main() {
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
   const tasksData = [
-    { projectId: projectA1.id, milestoneId: ms1.id, title: 'Design dashboard wireframes', status: TaskStatus.done, assigneeId: managerUser.id, dueDate: new Date('2025-02-10') },
-    { projectId: projectA1.id, milestoneId: ms1.id, title: 'Create component library in Figma', status: TaskStatus.done, assigneeId: managerUser.id, dueDate: new Date('2025-02-20') },
-    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Set up Express + Prisma boilerplate', status: TaskStatus.done, assigneeId: adminUser.id, dueDate: new Date('2025-03-05') },
-    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Implement JWT authentication', status: TaskStatus.done, assigneeId: adminUser.id, dueDate: new Date('2025-03-15') },
-    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Build billing endpoints (Stripe)', status: TaskStatus.in_progress, assigneeId: adminUser.id, dueDate: new Date('2025-04-20') },
-    { projectId: projectA1.id, milestoneId: ms3.id, title: 'Integrate auth flow in React', status: TaskStatus.todo, assigneeId: managerUser.id, dueDate: new Date('2025-05-15') },
-    { projectId: projectA1.id, milestoneId: ms3.id, title: 'Build dashboard charts (Recharts)', status: TaskStatus.todo, assigneeId: managerUser.id, dueDate: new Date('2025-06-01') },
-    { projectId: projectB1.id, milestoneId: ms4.id, title: 'Define brand tokens (colors, typography)', status: TaskStatus.done, assigneeId: managerUser.id, dueDate: new Date('2025-03-01') },
-    { projectId: projectB1.id, milestoneId: ms4.id, title: 'Build Storybook component library', status: TaskStatus.done, assigneeId: managerUser.id, dueDate: new Date('2025-03-10') },
+    { projectId: projectA1.id, milestoneId: ms1.id, title: 'Design dashboard wireframes',         status: TaskStatus.completed,   assigneeId: managerUser.id, endDate: new Date('2025-02-10'), order: 1 },
+    { projectId: projectA1.id, milestoneId: ms1.id, title: 'Create component library in Figma',   status: TaskStatus.completed,   assigneeId: managerUser.id, endDate: new Date('2025-02-20'), order: 2 },
+    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Set up Express + Prisma boilerplate', status: TaskStatus.completed,   assigneeId: adminUser.id,   endDate: new Date('2025-03-05'), order: 1 },
+    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Implement JWT authentication',        status: TaskStatus.completed,   assigneeId: adminUser.id,   endDate: new Date('2025-03-15'), order: 2 },
+    { projectId: projectA1.id, milestoneId: ms2.id, title: 'Build billing endpoints (Stripe)',    status: TaskStatus.in_progress, assigneeId: adminUser.id,   endDate: new Date('2025-04-20'), order: 3 },
+    { projectId: projectA1.id, milestoneId: ms3.id, title: 'Integrate auth flow in React',        status: TaskStatus.not_started, assigneeId: managerUser.id, endDate: new Date('2025-05-15'), order: 1 },
+    { projectId: projectA1.id, milestoneId: ms3.id, title: 'Build dashboard charts (Recharts)',   status: TaskStatus.not_started, assigneeId: managerUser.id, endDate: new Date('2025-06-01'), order: 2 },
+    { projectId: projectB1.id, milestoneId: ms4.id, title: 'Define brand tokens',                 status: TaskStatus.completed,   assigneeId: managerUser.id, endDate: new Date('2025-03-01'), order: 1 },
+    { projectId: projectB1.id, milestoneId: ms4.id, title: 'Build Storybook component library',   status: TaskStatus.completed,   assigneeId: managerUser.id, endDate: new Date('2025-03-10'), order: 2 },
   ]
 
   for (const task of tasksData) {
@@ -303,51 +281,51 @@ async function main() {
   const docsData = [
     {
       projectId: projectA1.id,
-      clientId: clientA.id,
-      name: 'SaaS Platform — Project Brief.pdf',
-      url: 'https://utfs.io/f/demo-brief.pdf',
-      category: DocumentCategory.contract,
-      size: 245760,
+      label: 'SaaS Platform — Project Brief.pdf',
+      fileUrl: 'https://utfs.io/f/demo-brief.pdf',
+      fileKey: 'demo-brief.pdf',
+      category: DocumentCategory.contracts,
+      fileSize: 245760,
       mimeType: 'application/pdf',
       uploadedById: adminUser.id,
     },
     {
       projectId: projectA1.id,
-      clientId: clientA.id,
-      name: 'UI Design — Dashboard v2.figma',
-      url: 'https://utfs.io/f/demo-design.fig',
-      category: DocumentCategory.design_asset,
-      size: 8388608,
+      label: 'UI Design — Dashboard v2.figma',
+      fileUrl: 'https://utfs.io/f/demo-design.fig',
+      fileKey: 'demo-design.fig',
+      category: DocumentCategory.design_assets,
+      fileSize: 8388608,
       mimeType: 'application/figma',
       uploadedById: managerUser.id,
     },
     {
       projectId: projectA1.id,
-      clientId: clientA.id,
-      name: 'API Documentation v1.pdf',
-      url: 'https://utfs.io/f/demo-apidocs.pdf',
-      category: DocumentCategory.technical_spec,
-      size: 512000,
+      label: 'API Documentation v1.pdf',
+      fileUrl: 'https://utfs.io/f/demo-apidocs.pdf',
+      fileKey: 'demo-apidocs.pdf',
+      category: DocumentCategory.technical_specs,
+      fileSize: 512000,
       mimeType: 'application/pdf',
       uploadedById: adminUser.id,
     },
     {
       projectId: projectB1.id,
-      clientId: clientB.id,
-      name: 'E-Commerce Redesign Proposal.pdf',
-      url: 'https://utfs.io/f/demo-proposal-b.pdf',
-      category: DocumentCategory.proposal,
-      size: 307200,
+      label: 'E-Commerce Redesign Proposal.pdf',
+      fileUrl: 'https://utfs.io/f/demo-proposal-b.pdf',
+      fileKey: 'demo-proposal-b.pdf',
+      category: DocumentCategory.proposals,
+      fileSize: 307200,
       mimeType: 'application/pdf',
       uploadedById: adminUser.id,
     },
     {
       projectId: projectC1.id,
-      clientId: clientC.id,
-      name: 'Patient Portal — Completion Report.pdf',
-      url: 'https://utfs.io/f/demo-completion.pdf',
-      category: DocumentCategory.report,
-      size: 409600,
+      label: 'Patient Portal — Completion Report.pdf',
+      fileUrl: 'https://utfs.io/f/demo-completion.pdf',
+      fileKey: 'demo-completion.pdf',
+      category: DocumentCategory.progress_reports,
+      fileSize: 409600,
       mimeType: 'application/pdf',
       uploadedById: adminUser.id,
     },
@@ -364,35 +342,42 @@ async function main() {
   const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
+  const nw1s = new Date(nextWeek); nw1s.setHours(10, 0, 0, 0)
+  const nw1e = new Date(nextWeek); nw1e.setHours(11, 0, 0, 0)
+  const nm1s = new Date(nextMonth); nm1s.setHours(14, 0, 0, 0)
+  const nm1e = new Date(nextMonth); nm1e.setHours(15, 30, 0, 0)
+  const nw2s = new Date(nextWeek); nw2s.setHours(9, 0, 0, 0)
+  const nw2e = new Date(nextWeek); nw2e.setHours(9, 30, 0, 0)
+
   await prisma.meeting.createMany({
     data: [
       {
         projectId: projectA1.id,
         title: 'Sprint 5 Review',
-        startTime: new Date(nextWeek.setHours(10, 0, 0, 0)),
-        endTime: new Date(nextWeek.setHours(11, 0, 0, 0)),
+        startTime: nw1s,
+        endTime: nw1e,
         meetLink: 'https://meet.google.com/demo-sprint5',
-        type: 'review',
+        type: MeetingType.review,
         agenda: '1. Review sprint 5 deliverables\n2. Demo billing integration\n3. Plan sprint 6',
         createdById: adminUser.id,
       },
       {
         projectId: projectA1.id,
         title: 'Kickoff — Mobile App Phase',
-        startTime: new Date(nextMonth.setHours(14, 0, 0, 0)),
-        endTime: new Date(nextMonth.setHours(15, 30, 0, 0)),
+        startTime: nm1s,
+        endTime: nm1e,
         meetLink: 'https://meet.google.com/demo-kickoff',
-        type: 'kickoff',
+        type: MeetingType.kickoff,
         agenda: '1. Mobile app scope review\n2. Technology stack confirmation\n3. Timeline and milestones',
         createdById: adminUser.id,
       },
       {
         projectId: projectB1.id,
         title: 'Weekly Standup',
-        startTime: new Date(nextWeek.setHours(9, 0, 0, 0)),
-        endTime: new Date(nextWeek.setHours(9, 30, 0, 0)),
+        startTime: nw2s,
+        endTime: nw2e,
         meetLink: 'https://meet.google.com/demo-standup-b',
-        type: 'standup',
+        type: MeetingType.standup,
         createdById: managerUser.id,
       },
     ],
@@ -401,78 +386,68 @@ async function main() {
   console.log('  ✓ Created meetings')
 
   // ── Invoices ───────────────────────────────────────────────────────────────
-  const invoicesData = [
-    {
-      projectId: projectA1.id,
-      clientId: clientA.id,
-      invoiceNumber: 'INV-2025-001',
-      amount: 250000,
-      currency: 'INR',
-      status: InvoiceStatus.paid,
-      dueDate: new Date('2025-02-15'),
-      paidAt: new Date('2025-02-10'),
-      description: 'Phase 1: Design & Prototyping',
-      notes: 'Payment received via NEFT',
-    },
-    {
-      projectId: projectA1.id,
-      clientId: clientA.id,
-      invoiceNumber: 'INV-2025-002',
-      amount: 350000,
-      currency: 'INR',
-      status: InvoiceStatus.paid,
-      dueDate: new Date('2025-04-01'),
-      paidAt: new Date('2025-03-28'),
-      description: 'Phase 2: Backend API Development',
-      notes: 'Payment received via UPI',
-    },
-    {
-      projectId: projectA1.id,
-      clientId: clientA.id,
-      invoiceNumber: 'INV-2025-003',
-      amount: 400000,
-      currency: 'INR',
-      status: InvoiceStatus.pending,
-      dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
-      description: 'Phase 3: Frontend Integration',
-    },
-    {
-      projectId: projectB1.id,
-      clientId: clientB.id,
-      invoiceNumber: 'INV-2025-004',
-      amount: 180000,
-      currency: 'INR',
-      status: InvoiceStatus.paid,
-      dueDate: new Date('2025-03-01'),
-      paidAt: new Date('2025-02-28'),
-      description: 'Milestone 1: Design System',
-    },
-    {
-      projectId: projectB1.id,
-      clientId: clientB.id,
-      invoiceNumber: 'INV-2025-005',
-      amount: 220000,
-      currency: 'INR',
-      status: InvoiceStatus.overdue,
-      dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-      description: 'Milestone 2: Product Catalog',
-    },
-    {
-      projectId: projectC1.id,
-      clientId: clientC.id,
-      invoiceNumber: 'INV-2024-008',
-      amount: 500000,
-      currency: 'INR',
-      status: InvoiceStatus.paid,
-      dueDate: new Date('2025-01-15'),
-      paidAt: new Date('2025-01-10'),
-      description: 'Final payment — Patient Portal delivery',
-    },
-  ]
-
-  for (const inv of invoicesData) {
-    await prisma.invoice.create({ data: inv })
-  }
+  await prisma.invoice.createMany({
+    data: [
+      {
+        clientId: clientA.id,
+        invoiceNumber: 'INV-2025-001',
+        amount: 250000,
+        status: InvoiceStatus.paid,
+        dueDate: new Date('2025-02-15'),
+        paidDate: new Date('2025-02-10'),
+        notes: 'Phase 1: Design & Prototyping. Payment received via NEFT.',
+        uploadedById: adminUser.id,
+      },
+      {
+        clientId: clientA.id,
+        invoiceNumber: 'INV-2025-002',
+        amount: 350000,
+        status: InvoiceStatus.paid,
+        dueDate: new Date('2025-04-01'),
+        paidDate: new Date('2025-03-28'),
+        notes: 'Phase 2: Backend API Development. Payment received via UPI.',
+        uploadedById: adminUser.id,
+      },
+      {
+        clientId: clientA.id,
+        invoiceNumber: 'INV-2025-003',
+        amount: 400000,
+        status: InvoiceStatus.pending,
+        dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+        notes: 'Phase 3: Frontend Integration',
+        uploadedById: adminUser.id,
+      },
+      {
+        clientId: clientB.id,
+        invoiceNumber: 'INV-2025-004',
+        amount: 180000,
+        status: InvoiceStatus.paid,
+        dueDate: new Date('2025-03-01'),
+        paidDate: new Date('2025-02-28'),
+        notes: 'Milestone 1: Design System',
+        uploadedById: adminUser.id,
+      },
+      {
+        clientId: clientB.id,
+        invoiceNumber: 'INV-2025-005',
+        amount: 220000,
+        status: InvoiceStatus.overdue,
+        dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
+        notes: 'Milestone 2: Product Catalog',
+        uploadedById: adminUser.id,
+      },
+      {
+        clientId: clientC.id,
+        invoiceNumber: 'INV-2024-008',
+        amount: 500000,
+        status: InvoiceStatus.paid,
+        dueDate: new Date('2025-01-15'),
+        paidDate: new Date('2025-01-10'),
+        notes: 'Final payment — Patient Portal delivery',
+        uploadedById: adminUser.id,
+      },
+    ],
+  })
 
   console.log('  ✓ Created invoices')
 
@@ -501,7 +476,6 @@ async function main() {
       devPct: 15,
       testingPct: 0,
       deployPct: 0,
-      attachments: [],
     },
   })
 
@@ -515,11 +489,9 @@ async function main() {
       devPct: 20,
       testingPct: 0,
       deployPct: 0,
-      attachments: [],
     },
   })
 
-  // Progress comment
   await prisma.progressComment.create({
     data: {
       progressUpdateId: update1.id,
@@ -528,7 +500,6 @@ async function main() {
     },
   })
 
-  // Progress reaction
   await prisma.progressReaction.create({
     data: {
       progressUpdateId: update1.id,
@@ -544,27 +515,26 @@ async function main() {
     data: [
       {
         userId: clientUserA.id,
-        type: 'progress_update',
+        type: NotificationType.progress_update,
         title: 'New progress update on SaaS Platform MVP',
         body: 'Week 12 update has been posted. Backend API is at 40%.',
-        entityId: update1.id,
-        entityType: 'ProgressUpdate',
+        link: `/portal/progress`,
         isRead: false,
       },
       {
         userId: clientUserA.id,
-        type: 'meeting_reminder',
+        type: NotificationType.meeting_reminder,
         title: 'Upcoming meeting: Sprint 5 Review',
         body: 'Your Sprint 5 Review meeting is scheduled for next week.',
-        entityType: 'Meeting',
+        link: `/portal/meetings`,
         isRead: false,
       },
       {
         userId: clientUserB.id,
-        type: 'invoice_due',
+        type: NotificationType.payment_due,
         title: 'Invoice INV-2025-005 is overdue',
         body: 'Invoice for ₹2,20,000 is 10 days overdue.',
-        entityType: 'Invoice',
+        link: `/portal/invoices`,
         isRead: false,
       },
     ],
@@ -575,24 +545,26 @@ async function main() {
   // ── Admin Logs ─────────────────────────────────────────────────────────────
   await prisma.adminLog.createMany({
     data: [
-      { userId: adminUser.id, action: 'CREATE_CLIENT', entityType: 'Client', entityId: clientA.id, meta: { companyName: 'TechVentures Pvt Ltd' } },
-      { userId: adminUser.id, action: 'CREATE_PROJECT', entityType: 'Project', entityId: projectA1.id, meta: { name: 'SaaS Platform MVP' } },
-      { userId: managerUser.id, action: 'UPLOAD_DOCUMENT', entityType: 'Document', meta: { name: 'UI Design — Dashboard v2.figma' } },
-      { userId: adminUser.id, action: 'CREATE_INVOICE', entityType: 'Invoice', entityId: invoicesData[0].invoiceNumber, meta: { amount: 250000 } },
-      { userId: adminUser.id, action: 'MARK_INVOICE_PAID', entityType: 'Invoice', meta: { invoiceNumber: 'INV-2025-001' } },
+      { userId: adminUser.id,   action: 'CREATE_CLIENT',      entityType: 'Client',  entityId: clientA.id,   metadata: { companyName: 'TechVentures Pvt Ltd' } },
+      { userId: adminUser.id,   action: 'CREATE_PROJECT',     entityType: 'Project', entityId: projectA1.id, metadata: { name: 'SaaS Platform MVP' } },
+      { userId: managerUser.id, action: 'UPLOAD_DOCUMENT',    entityType: 'Document',                        metadata: { name: 'UI Design — Dashboard v2.figma' } },
+      { userId: adminUser.id,   action: 'CREATE_INVOICE',     entityType: 'Invoice',                         metadata: { invoiceNumber: 'INV-2025-001', amount: 250000 } },
+      { userId: adminUser.id,   action: 'MARK_INVOICE_PAID',  entityType: 'Invoice',                         metadata: { invoiceNumber: 'INV-2025-001' } },
     ],
   })
 
   console.log('  ✓ Created admin logs')
-
   console.log('')
   console.log('✅ Seeding complete!')
   console.log('')
   console.log('  Demo credentials:')
   console.log('  Admin:   admin@hapkonic.com    / Admin@12345')
   console.log('  Manager: manager@hapkonic.com  / Manager@12345')
-  console.log('  Client:  arjun@techventures.in / Client@12345')
-  console.log('  Client:  sneha@retailedge.com  / Client@12345')
+  console.log('  Client:  arjun@techventures.in / Client@12345  (force password reset)')
+  console.log('  Client:  sneha@retailedge.com  / Client@12345  (force password reset)')
+
+  // suppress unused warning
+  void projectA2
 }
 
 main()
