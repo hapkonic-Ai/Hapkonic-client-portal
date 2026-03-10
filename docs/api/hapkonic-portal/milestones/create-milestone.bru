@@ -1,0 +1,31 @@
+meta {
+  name: Create Milestone
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/milestones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "projectId": "{{projectId}}",
+    "title": "Alpha Release",
+    "description": "First working version with core features",
+    "dueDate": "2025-05-15T00:00:00.000Z",
+    "order": 1
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("milestoneId", res.body.milestone.id)
+  }
+}

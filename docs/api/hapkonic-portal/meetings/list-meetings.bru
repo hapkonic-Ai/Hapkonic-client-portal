@@ -1,0 +1,20 @@
+meta {
+  name: List Meetings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/meetings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  projectId: {{projectId}}
+  upcoming: true
+}

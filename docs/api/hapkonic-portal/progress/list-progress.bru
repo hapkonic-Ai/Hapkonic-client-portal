@@ -1,0 +1,19 @@
+meta {
+  name: List Progress Updates
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/progress
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  projectId: {{projectId}}
+}

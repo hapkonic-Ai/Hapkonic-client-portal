@@ -1,0 +1,21 @@
+meta {
+  name: Update Client
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/clients/{{clientId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "contactPhone": "+91 88888 11111"
+  }
+}

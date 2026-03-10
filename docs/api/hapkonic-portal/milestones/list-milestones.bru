@@ -1,0 +1,19 @@
+meta {
+  name: List Milestones
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/milestones
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  projectId: {{projectId}}
+}

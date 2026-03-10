@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  admin
+  manager
+  client
+}
+
+enum ProjectStatus {
+  planning
+  active
+  on_hold
+  completed
+  cancelled
+}
+
+enum MilestoneStatus {
+  not_started
+  in_progress
+  completed
+  blocked
+}
+
+enum TaskStatus {
+  not_started
+  in_progress
+  completed
+  blocked
+  delayed
+}
+
+enum DocumentCategory {
+  contracts
+  proposals
+  design_assets
+  technical_specs
+  meeting_notes
+  invoices_financials
+  progress_reports
+  test_reports
+  deployment_guides
+  legal
+  miscellaneous
+}
+
+enum InvoiceStatus {
+  pending
+  paid
+  overdue
+  partially_paid
+  written_off
+}
+
+enum MeetingType {
+  kickoff
+  review
+  standup
+  demo
+  ad_hoc
+}
+
+enum ReminderChannel {
+  email
+  in_app
+  sms
+}
+
+enum NotificationType {
+  meeting_reminder
+  new_document
+  progress_update
+  new_comment
+  mention
+  payment_due
+  milestone_reached
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  role                Role      @default(client)
+  clientId            String?   @map("client_id")
+  client              Client?   @relation(fields: [clientId], references: [id])
+  name                String
+  avatar              String?
+  isActive            Boolean   @default(true) @map("is_active")
+  forcePasswordReset  Boolean   @default(true) @map("force_password_reset")
+  lastLoginAt         DateTime? @map("last_login_at")
+  totpSecret          String?   @map("totp_secret")
+  totpEnabled         Boolean   @default(false) @map("totp_enabled")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  comments            MilestoneComment[]
+  progressUpdates     ProgressUpdate[]
+  adminLogs           AdminLog[]
+  notifications       Notification[]
+  documentUploads     Document[]         @relation("UploadedBy")
+  invoiceUploads      Invoice[]          @relation("InvoiceUploadedBy")
+
+  @@map("users")
+}
+
+model Client {
+  id            String    @id @default(cuid())
+  companyName   String    @map("company_name")
+  logo          String?
+  industry      String?
+  contactName   String?   @map("contact_name")
+  contactEmail  String?   @map("contact_email")
+  contactPhone  String?   @map("contact_phone")
+  isActive      Boolean   @default(true) @map("is_active")
+  onboardedAt   DateTime  @default(now()) @map("onboarded_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  users         User[]
+  projects      Project[]
+  invoices      Invoice[]
+
+  @@map("clients")
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  clientId      String        @map("client_id")
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  status        ProjectStatus @default(planning)
+  startDate     DateTime?     @map("start_date")
+  endDate       DateTime?     @map("end_date")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  milestones      Milestone[]
+  tasks           Task[]
+  documents       Document[]
+  meetings        Meeting[]
+  progressUpdates ProgressUpdate[]
+
+  @@map("projects")
+}
+
+model Document {
+  id           String           @id @default(cuid())
+  projectId    String           @map("project_id")
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category     DocumentCategory @default(miscellaneous)
+  label        String
+  fileUrl      String           @map("file_url")
+  fileKey      String           @map("file_key")
+  fileSize     Int?             @map("file_size")
+  mimeType     String?          @map("mime_type")
+  thumbnailUrl String?          @map("thumbnail_url")
+  uploadedById String           @map("uploaded_by_id")
+  uploadedBy   User             @relation("UploadedBy", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime         @default(now()) @map("uploaded_at")
+  viewedAt     DateTime?        @map("viewed_at")
+  downloadedAt DateTime?        @map("downloaded_at")
+
+  @@map("documents")
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  projectId   String          @map("project_id")
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      MilestoneStatus @default(not_started)
+  targetDate  DateTime?       @map("target_date")
+  completedAt DateTime?       @map("completed_at")
+  completedBy String?         @map("completed_by")
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  tasks    Task[]
+  comments MilestoneComment[]
+
+  @@map("milestones")
+}
+
+model MilestoneComment {
+  id          String    @id @default(cuid())
+  milestoneId String    @map("milestone_id")
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id])
+  body        String
+  parentId    String?   @map("parent_id")
+  parent      MilestoneComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     MilestoneComment[] @relation("CommentReplies")
+  isResolved  Boolean   @default(false) @map("is_resolved")
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  editedAt    DateTime? @map("edited_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("milestone_comments")
+}
+
+model Meeting {
+  id          String      @id @default(cuid())
+  projectId   String      @map("project_id")
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  gcalEventId String?     @unique @map("gcal_event_id")
+  startTime   DateTime    @map("start_time")
+  endTime     DateTime    @map("end_time")
+  meetLink    String?     @map("meet_link")
+  type        MeetingType @default(ad_hoc)
+  agenda      String?
+  summary     String?
+  actionItems String?     @map("action_items")
+  createdById String?     @map("created_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("meetings")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  projectId   String     @map("project_id")
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestoneId String?    @map("milestone_id")
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+  title       String
+  description String?
+  startDate   DateTime?  @map("start_date")
+  endDate     DateTime?  @map("end_date")
+  progress    Int        @default(0)
+  assigneeId  String?    @map("assignee_id")
+  status      TaskStatus @default(not_started)
+  dependsOn   String?    @map("depends_on")
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("tasks")
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  clientId       String        @map("client_id")
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  invoiceNumber  String        @unique @map("invoice_number")
+  amount         Decimal       @db.Decimal(12, 2)
+  status         InvoiceStatus @default(pending)
+  dueDate        DateTime      @map("due_date")
+  paidDate       DateTime?     @map("paid_date")
+  pdfUrl         String?       @map("pdf_url")
+  pdfKey         String?       @map("pdf_key")
+  uploadedById   String?       @map("uploaded_by_id")
+  uploadedBy     User?         @relation("InvoiceUploadedBy", fields: [uploadedById], references: [id])
+  notes          String?
+  snoozedUntil   DateTime?     @map("snoozed_until")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  reminders PaymentReminder[]
+
+  @@map("invoices")
+}
+
+model PaymentReminder {
+  id          String          @id @default(cuid())
+  invoiceId   String          @map("invoice_id")
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  sentAt      DateTime        @default(now()) @map("sent_at")
+  channel     ReminderChannel
+  triggerType String          @map("trigger_type")
+
+  @@map("payment_reminders")
+}
+
+model ProgressUpdate {
+  id              String   @id @default(cuid())
+  projectId       String   @map("project_id")
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id])
+  body            String
+  overallPct      Int      @default(0) @map("overall_pct")
+  designPct       Int      @default(0) @map("design_pct")
+  devPct          Int      @default(0) @map("dev_pct")
+  testingPct      Int      @default(0) @map("testing_pct")
+  deployPct       Int      @default(0) @map("deploy_pct")
+  attachments     Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  reactions ProgressReaction[]
+  comments  ProgressComment[]
+
+  @@map("progress_updates")
+}
+
+model ProgressComment {
+  id               String          @id @default(cuid())
+  progressUpdateId String          @map("progress_update_id")
+  progressUpdate   ProgressUpdate  @relation(fields: [progressUpdateId], references: [id], onDelete: Cascade)
+  userId           String          @map("user_id")
+  body             String
+  parentId         String?         @map("parent_id")
+  parent           ProgressComment?   @relation("ProgressCommentReplies", fields: [parentId], references: [id])
+  replies          ProgressComment[]  @relation("ProgressCommentReplies")
+  isDeleted        Boolean         @default(false) @map("is_deleted")
+  editedAt         DateTime?       @map("edited_at")
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  reactions ProgressCommentReaction[]
+
+  @@map("progress_comments")
+}
+
+model ProgressReaction {
+  id               String         @id @default(cuid())
+  progressUpdateId String         @map("progress_update_id")
+  progressUpdate   ProgressUpdate @relation(fields: [progressUpdateId], references: [id], onDelete: Cascade)
+  userId           String         @map("user_id")
+  emoji            String
+
+  @@unique([progressUpdateId, userId, emoji])
+  @@map("progress_reactions")
+}
+
+model ProgressCommentReaction {
+  id                String          @id @default(cuid())
+  progressCommentId String          @map("progress_comment_id")
+  progressComment   ProgressComment @relation(fields: [progressCommentId], references: [id], onDelete: Cascade)
+  userId            String          @map("user_id")
+  emoji             String
+
+  @@unique([progressCommentId, userId, emoji])
+  @@map("progress_comment_reactions")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("admin_logs")
+}

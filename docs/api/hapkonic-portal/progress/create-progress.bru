@@ -1,0 +1,33 @@
+meta {
+  name: Create Progress Update
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/progress
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "projectId": "{{projectId}}",
+    "body": "## Week 14 Update\n\nSteady progress on the billing integration.\n\n**Completed:**\n- Stripe webhook handling\n- Subscription management API\n\n**Next:**\n- Frontend billing UI",
+    "overallPct": 55,
+    "designPct": 80,
+    "devPct": 55,
+    "testingPct": 15,
+    "deployPct": 0
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("progressId", res.body.update.id)
+  }
+}

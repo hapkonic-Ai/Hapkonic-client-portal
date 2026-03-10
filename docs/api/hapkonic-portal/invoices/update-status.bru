@@ -1,0 +1,22 @@
+meta {
+  name: Update Invoice Status
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/invoices/{{invoiceId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "paid",
+    "notes": "Payment received via NEFT on 2025-04-15"
+  }
+}

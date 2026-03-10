@@ -1,0 +1,34 @@
+meta {
+  name: Create Invoice
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/invoices
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "projectId": "{{projectId}}",
+    "clientId": "{{clientId}}",
+    "invoiceNumber": "INV-2025-010",
+    "amount": 150000,
+    "currency": "INR",
+    "dueDate": "2025-05-01T00:00:00.000Z",
+    "description": "Phase 2 development milestone",
+    "pdfUrl": "https://utfs.io/f/sample-invoice.pdf"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("invoiceId", res.body.invoice.id)
+  }
+}

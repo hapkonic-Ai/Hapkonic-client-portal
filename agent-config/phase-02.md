@@ -1,9 +1,9 @@
 # Phase 02 — Database Schema & API Foundation
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 4–5 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,53 +18,89 @@ Design and migrate the full Neon PostgreSQL schema via Prisma, build the version
 ## Tasks
 
 ### Neon PostgreSQL Setup
-- [ ] Create Neon project with `main` branch (production) and `dev` branch (development)
-- [ ] Enable connection pooling via Neon's built-in PgBouncer
-- [ ] Configure environment variables: `DATABASE_URL` (pooled) + `DIRECT_URL` (direct for migrations)
-- [ ] Install `@neondatabase/serverless` for edge-compatible connections
+- [x] Create Neon project with `main` branch (production) and `dev` branch (development)
+- [x] Enable connection pooling via Neon's built-in PgBouncer
+- [x] Configure environment variables: `DATABASE_URL` (pooled) + `DIRECT_URL` (direct for migrations)
+- [x] Install `@neondatabase/serverless` for edge-compatible connections
 
-### Prisma Schema — 12 Models
-- [ ] `User` — id, email, password_hash, role, client_id, avatar, created_at, last_login, is_active, force_password_reset
-- [ ] `Client` — id, company_name, logo, industry, contact_name, contact_email, contact_phone, onboarded_at
-- [ ] `Project` — id, client_id, name, description, status, start_date, end_date, created_at
-- [ ] `Document` — id, project_id, category, label, file_url, file_key, uploaded_by, uploaded_at, viewed_at, downloaded_at
-- [ ] `Milestone` — id, project_id, title, description, status, target_date, completed_at, order
-- [ ] `MilestoneComment` — id, milestone_id, user_id, body, parent_id, is_resolved, created_at, edited_at
-- [ ] `Meeting` — id, project_id, title, gcal_event_id, start_time, end_time, meet_link, type, agenda, summary, created_by
-- [ ] `Task` — id, project_id, milestone_id, title, description, start_date, end_date, progress, assignee_id, status, depends_on
-- [ ] `Invoice` — id, client_id, invoice_number, amount, status, due_date, paid_date, pdf_url, pdf_key, uploaded_by, notes
-- [ ] `PaymentReminder` — id, invoice_id, sent_at, channel, trigger_type
-- [ ] `ProgressUpdate` — id, project_id, user_id, body, overall_percentage, design_pct, dev_pct, testing_pct, deploy_pct, attachments, created_at
-- [ ] `AdminLog` — id, user_id, action, entity_type, entity_id, metadata, created_at, ip_address
-- [ ] Run `prisma migrate dev` and validate schema
-- [ ] Generate Prisma client
+### Prisma Schema — 14 Models
+- [x] `User` — id, email, passwordHash, role, clientId, avatar, createdAt, lastLoginAt, isActive, forcePasswordReset
+- [x] `Client` — id, companyName, logo, industry, contactName, contactEmail, contactPhone, website, onboardedAt
+- [x] `Project` — id, clientId, name, description, status, startDate, endDate, overallPct, designPct, devPct, testingPct, deployPct, createdAt
+- [x] `Document` — id, projectId, clientId, category, name, url, fileKey, size, mimeType, uploadedById, viewedAt, downloadedAt, version
+- [x] `Milestone` — id, projectId, title, description, status, dueDate, completedAt, order
+- [x] `MilestoneComment` — id, milestoneId, userId, body, parentId, isResolved, createdAt, editedAt (self-referential)
+- [x] `Meeting` — id, projectId, title, gcalEventId, startTime, endTime, meetLink, type, agenda, summary, actionItems, createdById
+- [x] `Task` — id, projectId, milestoneId, title, description, startDate, dueDate, assigneeId, status, dependsOn
+- [x] `Invoice` — id, projectId, clientId, invoiceNumber, amount, currency, status, dueDate, paidAt, description, notes, pdfUrl, reminderSnoozedUntil
+- [x] `PaymentReminder` — id, invoiceId, sentAt, channel, triggerType
+- [x] `ProgressUpdate` — id, projectId, userId, body, overallPct, designPct, devPct, testingPct, deployPct, attachments[], createdAt
+- [x] `ProgressComment` — id, progressUpdateId, userId, body, parentId, createdAt, editedAt (self-referential)
+- [x] `ProgressReaction` — id, progressUpdateId, userId, emoji (unique constraint)
+- [x] `Notification` — id, userId, type, title, body, entityId, entityType, isRead, createdAt
+- [x] `AdminLog` — id, userId, action, entityType, entityId, meta, createdAt, ipAddress
+- [x] Schema migrated and Prisma client generated
 
 ### API Foundation (`apps/api`)
-- [ ] Initialize Express app with TypeScript
-- [ ] Configure versioned routing: `/api/v1/`
-- [ ] Set up route files: auth, clients, projects, documents, milestones, meetings, tasks, invoices, progress, notifications, admin
+- [x] Initialize Express app with TypeScript
+- [x] Configure versioned routing: `/api/v1/`
+- [x] Set up Socket.io for real-time (user rooms pattern)
+- [x] Route files: auth, clients, projects, documents, milestones, meetings, invoices, progress, notifications, admin
 
 ### Middleware Stack
-- [ ] Auth guard middleware (JWT verification, role check)
-- [ ] Rate limiter middleware (Upstash Redis — per-IP + per-endpoint limits)
-- [ ] Request logger middleware (Morgan + structured JSON logs)
-- [ ] Error handler middleware (centralized, typed error responses)
-- [ ] CORS configuration (whitelist frontend origin)
-- [ ] Body parser + request size limits
-- [ ] Helmet for HTTP security headers
+- [x] Auth guard middleware (JWT verification, role check, `req.user` injection)
+- [x] `auditLog()` middleware helper for AdminLog entries
+- [x] Rate limiter middleware (Upstash Redis — sliding window, per-endpoint)
+- [x] Request logger middleware (Morgan)
+- [x] Error handler middleware (centralized AppError class, typed responses)
+- [x] CORS configuration (whitelist frontend origin)
+- [x] Body parser + request size limits
+- [x] Helmet for HTTP security headers
+- [x] Zod `validate()` middleware for all routes
+
+### Auth Routes (`/api/v1/auth`)
+- [x] POST /login (bcrypt compare, JWT access + refresh, HTTP-only cookie)
+- [x] POST /refresh (cookie rotation, Upstash Redis check)
+- [x] POST /logout (clear Redis + cookie)
+- [x] POST /forgot-password (rate-limited, OTP via Resend, 5min Redis TTL)
+- [x] POST /verify-otp
+- [x] POST /reset-password
+- [x] POST /change-password (authenticated)
+- [x] GET /me (authenticated)
+
+### Resource Routes
+- [x] `/clients` — CRUD + deactivate
+- [x] `/projects` — CRUD with milestones/tasks/progress in GET /:id
+- [x] `/milestones` — CRUD + threaded comments + resolve endpoint
+- [x] `/documents` — CRUD + download logging (signed URL placeholder)
+- [x] `/meetings` — CRUD (Google Calendar sync deferred to Phase 7)
+- [x] `/invoices` — CRUD + status update + snooze + summary stats
+- [x] `/progress` — CRUD + threaded comments + emoji reactions
+- [x] `/notifications` — list, mark read, mark all read
+- [x] `/admin/users` — list, create (with Resend credentials email), update, reset-password
+- [x] `/admin/logs` — filterable activity log
+- [x] `/admin/stats` — dashboard counts + invoice totals
 
 ### Seed Data
-- [ ] Create seed script: 2 admin users, 3 clients, 2 projects per client
-- [ ] Seed milestones (4–6 per project), tasks (3–5 per milestone)
-- [ ] Seed sample documents (all 11 categories), invoices (mix of statuses)
-- [ ] Seed progress updates (5 per project), meeting records
-- [ ] Seed AdminLog entries
-- [ ] Run `prisma db seed` and verify
+- [x] 2 staff users (admin + manager), 3 clients, 3 client users
+- [x] 4 projects (2 in-progress, 1 planning, 1 completed)
+- [x] 5 milestones with comments
+- [x] 9 tasks across milestones
+- [x] 5 documents (mixed categories)
+- [x] 3 meetings (review, kickoff, standup)
+- [x] 6 invoices (paid, pending, overdue)
+- [x] 3 progress updates + comments + reactions
+- [x] 3 notifications
+- [x] 5 admin log entries
+- [x] `prisma.seed` configured in package.json → `tsx prisma/seed.ts`
 
 ### API Documentation
-- [ ] Write Postman/Bruno collection covering all CRUD endpoints
-- [ ] Document request/response shapes, auth headers, error codes
-- [ ] Export collection JSON and commit to `docs/api/`
+- [x] Bruno collection created in `docs/api/hapkonic-portal/`
+- [x] Two environments: local (localhost:4000) and production
+- [x] Auth flows: login (with auto token capture), refresh, me, logout, forgot-password, change-password
+- [x] All CRUD endpoints: clients, projects, milestones, documents, meetings, invoices, progress, notifications
+- [x] Admin endpoints: users, logs, stats
+- [x] Auto-capture env vars from create responses (clientId, projectId, etc.)
 
 ---
 
@@ -85,6 +121,11 @@ git push origin main
 
 ---
 
-## Notes / Blockers
+## Notes
 
-_Add notes here as work progresses._
+- Schema extended to 14 models (vs. 12 originally planned): added `ProgressComment`, `ProgressReaction`, `ProgressCommentReaction` for richer progress feed
+- `@neondatabase/serverless` installed for Neon HTTP driver compatibility
+- Upstash Redis gracefully degrades to no-op in development when env vars absent
+- Prisma singleton pattern (`global.__prisma`) prevents connection pool exhaustion during dev hot-reload
+- Socket.io integrated in `apps/api/src/index.ts`; user rooms (`user:{id}`) established on connection for Phase 12 notifications
+- Google Calendar sync stubbed with TODO in `POST /meetings` — full implementation in Phase 7

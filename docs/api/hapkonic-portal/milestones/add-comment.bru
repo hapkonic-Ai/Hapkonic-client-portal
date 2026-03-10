@@ -1,0 +1,21 @@
+meta {
+  name: Add Milestone Comment
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/milestones/{{milestoneId}}/comments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "body": "Looks great! Can we review the acceptance criteria?"
+  }
+}

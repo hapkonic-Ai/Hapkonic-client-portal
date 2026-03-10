@@ -1,0 +1,21 @@
+meta {
+  name: Add Reaction
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/progress/{{progressId}}/reactions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "emoji": "🎉"
+  }
+}

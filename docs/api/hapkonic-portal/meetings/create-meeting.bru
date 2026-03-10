@@ -1,0 +1,33 @@
+meta {
+  name: Create Meeting
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/meetings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "projectId": "{{projectId}}",
+    "title": "Sprint Review Meeting",
+    "startTime": "2025-04-20T10:00:00.000Z",
+    "endTime": "2025-04-20T11:00:00.000Z",
+    "meetLink": "https://meet.google.com/abc-defg-hij",
+    "type": "review",
+    "agenda": "1. Demo latest features\n2. Client feedback\n3. Next sprint planning"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("meetingId", res.body.meeting.id)
+  }
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Activity Logs
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/admin/logs
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  take: 20
+  skip: 0
+}

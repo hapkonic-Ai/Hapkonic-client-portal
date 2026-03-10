@@ -1,0 +1,32 @@
+meta {
+  name: Create Client
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/clients
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "companyName": "Acme Corp",
+    "industry": "Manufacturing",
+    "contactName": "John Doe",
+    "contactEmail": "john@acmecorp.com",
+    "contactPhone": "+91 99999 00000",
+    "website": "https://acmecorp.com"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("clientId", res.body.client.id)
+  }
+}

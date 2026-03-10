@@ -1,0 +1,33 @@
+meta {
+  name: Create Document (Admin/Manager)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/documents
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "projectId": "{{projectId}}",
+    "clientId": "{{clientId}}",
+    "name": "Project Proposal v2.pdf",
+    "url": "https://utfs.io/f/sample-file-key",
+    "category": "proposal",
+    "size": 512000,
+    "mimeType": "application/pdf"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("documentId", res.body.document.id)
+  }
+}
