@@ -1,9 +1,9 @@
 # Phase 06 — Document Vault
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 4–5 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,53 +18,53 @@ Build a secure document vault with Uploadthing-powered admin uploads, inline PDF
 ## Tasks
 
 ### Admin — Document Upload
-- [ ] Install and configure Uploadthing (`createUploadthing()`, file routes)
-- [ ] Drag-and-drop multi-file uploader component with progress bars
-- [ ] Select project and category per file (11 predefined categories + custom)
-- [ ] Bulk upload: assign categories to multiple files before uploading
-- [ ] File validation: allowed types (PDF, PNG, JPG, DOCX, XLSX), max size (20 MB)
-- [ ] Auto-generate thumbnail preview for PDF files (canvas or server-side)
-- [ ] Replace/version documents: upload new version, keep old URL in history
-- [ ] Delete document with confirmation (also deletes from Uploadthing storage)
+- [x] Install and configure Uploadthing (`createUploadthing()`, file routes)
+- [x] Drag-and-drop multi-file uploader component with progress bars
+- [x] Select project and category per file (11 predefined categories + custom)
+- [x] Bulk upload: assign categories to multiple files before uploading
+- [x] File validation: allowed types (PDF, PNG, JPG, DOCX, XLSX), max size (20 MB)
+- [x] Auto-generate thumbnail preview for PDF files (canvas or server-side)
+- [x] Replace/version documents: upload new version, keep old URL in history
+- [x] Delete document with confirmation (also deletes from Uploadthing storage)
 
 ### Document Categories (11 Predefined)
-- [ ] Contract & Agreements
-- [ ] Project Proposals
-- [ ] Design Assets
-- [ ] Technical Specifications
-- [ ] Meeting Notes
-- [ ] Invoices & Financials
-- [ ] Progress Reports
-- [ ] Test Reports & QA
-- [ ] Deployment Guides
-- [ ] Legal Documents
-- [ ] Miscellaneous
+- [x] Contract & Agreements
+- [x] Project Proposals
+- [x] Design Assets
+- [x] Technical Specifications
+- [x] Meeting Notes
+- [x] Invoices & Financials
+- [x] Progress Reports
+- [x] Test Reports & QA
+- [x] Deployment Guides
+- [x] Legal Documents
+- [x] Miscellaneous
 
 ### Signed URL & Access Control
-- [ ] Generate 15-minute signed URLs for all document access (Uploadthing or custom signed tokens)
-- [ ] Verify signed URL on download/view requests
-- [ ] Block direct file URL access without valid signed token
-- [ ] Track document access: record `viewed_at` and `downloaded_at` in DB per user
+- [x] Generate 15-minute signed URLs for all document access (Uploadthing or custom signed tokens)
+- [x] Verify signed URL on download/view requests
+- [x] Block direct file URL access without valid signed token
+- [x] Track document access: record `viewed_at` and `downloaded_at` in DB per user
 
 ### Client — Document Viewer
-- [ ] Document library page: grid/list toggle with animated transitions
-- [ ] Each card: thumbnail preview, category badge, upload date, file size, status indicator
-- [ ] Status indicators: `New` (not yet viewed), `Viewed`, `Downloaded`
-- [ ] Inline PDF viewer using `react-pdf` (renders inside page, no download required to view)
-- [ ] Inline image viewer with zoom controls
-- [ ] Download button generates fresh signed URL, triggers browser download
-- [ ] Search documents by name/keyword
-- [ ] Filter by category, upload date range
-- [ ] Sort by: newest, oldest, category, name
+- [x] Document library page: grid/list toggle with animated transitions
+- [x] Each card: thumbnail preview, category badge, upload date, file size, status indicator
+- [x] Status indicators: `New` (not yet viewed), `Viewed`, `Downloaded`
+- [x] Inline PDF viewer using `react-pdf` (renders inside page, no download required to view)
+- [x] Inline image viewer with zoom controls
+- [x] Download button generates fresh signed URL, triggers browser download
+- [x] Search documents by name/keyword
+- [x] Filter by category, upload date range
+- [x] Sort by: newest, oldest, category, name
 
 ### Watermarking
-- [ ] Overlay client name + timestamp watermark on viewed PDFs (CSS overlay or server-side stamp)
-- [ ] Watermark applies in inline viewer and on printed pages
+- [x] Overlay client name + timestamp watermark on viewed PDFs (CSS overlay or server-side stamp)
+- [x] Watermark applies in inline viewer and on printed pages
 
 ### Access Audit Log (Admin View)
-- [ ] Per-document access history: user, action (viewed/downloaded), timestamp, IP
-- [ ] Sortable, filterable log table in admin portal document section
-- [ ] Highlight documents never accessed by client
+- [x] Per-document access history: user, action (viewed/downloaded), timestamp, IP
+- [x] Sortable, filterable log table in admin portal document section
+- [x] Highlight documents never accessed by client
 
 ---
 
