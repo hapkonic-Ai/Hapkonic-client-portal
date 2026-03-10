@@ -10,15 +10,17 @@ import { Modal } from '../../components/ui/Modal'
 import { formatDate } from '../../lib/utils'
 
 const CATEGORIES: DocumentCategory[] = [
-  'contract', 'proposal', 'invoice', 'design_asset', 'technical_spec',
-  'report', 'presentation', 'legal', 'nda', 'receipt', 'other',
+  'contracts', 'proposals', 'design_assets', 'technical_specs', 'meeting_notes',
+  'invoices_financials', 'progress_reports', 'test_reports', 'deployment_guides',
+  'legal', 'miscellaneous',
 ]
 
 function categoryLabel(cat: DocumentCategory) {
   return cat.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-function fileSize(bytes: number) {
+function fileSizeLabel(bytes?: number) {
+  if (!bytes) return '—'
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -26,9 +28,12 @@ function fileSize(bytes: number) {
 
 function UploadForm({ clients, projects, onSubmit, onClose }: {
   clients: Client[]; projects: Project[]
-  onSubmit: (data: Record<string, unknown>) => Promise<void>; onClose: () => void
+  onSubmit: (data: Parameters<typeof documentsApi.create>[0]) => Promise<void>; onClose: () => void
 }) {
-  const [form, setForm] = useState({ clientId: '', projectId: '', name: '', url: '', category: 'other' as DocumentCategory, size: '', mimeType: 'application/pdf' })
+  const [form, setForm] = useState({
+    clientId: '', projectId: '', label: '', fileUrl: '', fileKey: '',
+    category: 'miscellaneous' as DocumentCategory, fileSize: '', mimeType: 'application/pdf',
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const set = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }))
@@ -37,8 +42,17 @@ function UploadForm({ clients, projects, onSubmit, onClose }: {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError(null)
-    try { await onSubmit({ ...form, size: parseInt(form.size) || 0, projectId: form.projectId || undefined }) }
-    catch (err) { setError((err as Error).message) } finally { setLoading(false) }
+    try {
+      await onSubmit({
+        projectId: form.projectId,
+        label: form.label,
+        fileUrl: form.fileUrl,
+        fileKey: form.fileKey || form.fileUrl.split('/').pop() || 'file',
+        category: form.category,
+        fileSize: parseInt(form.fileSize) || undefined,
+        mimeType: form.mimeType || undefined,
+      })
+    } catch (err) { setError((err as Error).message) } finally { setLoading(false) }
   }
 
   return (
@@ -47,30 +61,30 @@ function UploadForm({ clients, projects, onSubmit, onClose }: {
         <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Client</label>
         <select value={form.clientId} onChange={e => { set('clientId', e.target.value); set('projectId', '') }} required
           className="w-full px-3 py-2.5 rounded-xl text-sm"
-          style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+          style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}>
           <option value="">Select client...</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.companyName}</option>)}
         </select>
       </div>
       {form.clientId && (
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Project (optional)</label>
-          <select value={form.projectId} onChange={e => set('projectId', e.target.value)}
+          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Project</label>
+          <select value={form.projectId} onChange={e => set('projectId', e.target.value)} required
             className="w-full px-3 py-2.5 rounded-xl text-sm"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
-            <option value="">No specific project</option>
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}>
+            <option value="">Select project...</option>
             {clientProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </div>
       )}
-      <Input label="Document Name" value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Project Brief.pdf" />
-      <Input label="File URL" value={form.url} onChange={e => set('url', e.target.value)} required placeholder="https://utfs.io/f/..." />
+      <Input label="Document Label" value={form.label} onChange={e => set('label', e.target.value)} required placeholder="Project Brief.pdf" />
+      <Input label="File URL" value={form.fileUrl} onChange={e => set('fileUrl', e.target.value)} required placeholder="https://utfs.io/f/..." />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Category</label>
           <select value={form.category} onChange={e => set('category', e.target.value)}
             className="w-full px-3 py-2.5 rounded-xl text-sm"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}>
             {CATEGORIES.map(c => <option key={c} value={c}>{categoryLabel(c)}</option>)}
           </select>
         </div>
@@ -110,13 +124,13 @@ export default function AdminDocumentsPage() {
     const q = search.toLowerCase()
     setFiltered(documents.filter(d => {
       const matchCat = catFilter === 'all' || d.category === catFilter
-      const matchSearch = d.name.toLowerCase().includes(q) || (d.project?.name ?? '').toLowerCase().includes(q)
+      const matchSearch = (d.label ?? '').toLowerCase().includes(q) || (d.project?.name ?? '').toLowerCase().includes(q)
       return matchCat && matchSearch
     }))
   }, [search, catFilter, documents])
 
-  async function handleCreate(data: Record<string, unknown>) {
-    const { document } = await documentsApi.create(data as Parameters<typeof documentsApi.create>[0])
+  async function handleCreate(data: Parameters<typeof documentsApi.create>[0]) {
+    const { document } = await documentsApi.create(data)
     setDocuments(prev => [document, ...prev]); setShowUpload(false)
   }
 
@@ -127,8 +141,8 @@ export default function AdminDocumentsPage() {
   }
 
   async function handleDownload(doc: Document) {
-    const { url } = await documentsApi.download(doc.id)
-    window.open(url ?? doc.url, '_blank')
+    const { fileUrl } = await documentsApi.download(doc.id)
+    window.open(fileUrl ?? doc.fileUrl, '_blank')
   }
 
   return (
@@ -150,7 +164,7 @@ export default function AdminDocumentsPage() {
           <Filter size={14} style={{ color: 'var(--text-muted)' }} />
           <select value={catFilter} onChange={e => setCatFilter(e.target.value as DocumentCategory | 'all')}
             className="px-3 py-2 rounded-xl text-sm"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-default)' }}>
             <option value="all">All categories</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{categoryLabel(c)}</option>)}
           </select>
@@ -167,10 +181,10 @@ export default function AdminDocumentsPage() {
           <p style={{ color: 'var(--text-secondary)' }}>No documents found.</p>
         </Card>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--border)' }}>
+        <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--border-default)' }}>
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-default)' }}>
                 {['Name', 'Category', 'Project', 'Size', 'Uploaded', 'Last Viewed', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{h}</th>
                 ))}
@@ -180,17 +194,17 @@ export default function AdminDocumentsPage() {
               <AnimatePresence>
                 {filtered.map((doc, i) => (
                   <motion.tr key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                    style={{ borderBottom: '1px solid var(--border)' }} className="transition-colors hover:bg-[var(--bg-secondary)]">
+                    style={{ borderBottom: '1px solid var(--border-default)' }} className="transition-colors hover:bg-[var(--bg-secondary)]">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <FileText size={14} style={{ color: 'var(--primary-500)' }} />
-                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{doc.name}</span>
+                        <FileText size={14} style={{ color: 'var(--color-primary-500)' }} />
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{doc.label}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3"><Badge variant="neutral">{categoryLabel(doc.category)}</Badge></td>
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{doc.project?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{fileSize(doc.size)}</td>
-                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(doc.createdAt)}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{fileSizeLabel(doc.fileSize)}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(doc.uploadedAt)}</td>
                     <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{doc.viewedAt ? formatDate(doc.viewedAt) : 'Never'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
@@ -213,7 +227,7 @@ export default function AdminDocumentsPage() {
         {deleting && (
           <div className="space-y-4">
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Delete <strong style={{ color: 'var(--text-primary)' }}>{deleting.name}</strong>? This cannot be undone.
+              Delete <strong style={{ color: 'var(--text-primary)' }}>{deleting.label}</strong>? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
