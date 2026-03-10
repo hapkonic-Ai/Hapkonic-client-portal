@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i \"s/\\\\*\\\\*Status:\\\\*\\\\* Not Started/**Status:** Completed/\" agent-config/phase-18.md)",
+      "Bash(sed -i \"s/\\\\*\\\\*Started:\\\\*\\\\* —/**Started:** 2026-03-10/\" agent-config/phase-18.md)",
+      "Bash(sed -i \"s/\\\\*\\\\*Completed:\\\\*\\\\* —/**Completed:** 2026-03-10/\" agent-config/phase-18.md)",
+      "Bash(sed -i 's/- \\\\[ \\\\]/- [x]/g' agent-config/phase-18.md)"
+    ]
+  }
+}

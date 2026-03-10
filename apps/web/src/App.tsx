@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { OfflineBanner } from './components/OfflineBanner'
+import { OnboardingTour } from './pages/portal/OnboardingTour'
+import { FeedbackWidget } from './components/FeedbackWidget'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/guards/ProtectedRoute'
@@ -112,6 +114,8 @@ export default function App() {
             <AppRoutes />
           </Suspense>
           <CommandPalette />
+          <OnboardingTour />
+          <FeedbackWidget />
         </CommandPaletteProvider>
       </AuthProvider>
     </ThemeProvider>

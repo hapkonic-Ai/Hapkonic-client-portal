@@ -1,0 +1,27 @@
+{
+  "framework": "vite",
+  "buildCommand": "cd ../.. && npm run build --workspace=apps/web",
+  "outputDirectory": "dist",
+  "installCommand": "cd ../.. && npm ci",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "@hapkonic-api-url"
+  }
+}

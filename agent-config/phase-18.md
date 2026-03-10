@@ -1,9 +1,9 @@
 # Phase 18 — Deployment & DevOps
 
-**Status:** Not Started
+**Status:** Completed
 **Estimated Duration:** 3–4 days
-**Started:** —
-**Completed:** —
+**Started:** 2026-03-10
+**Completed:** 2026-03-10
 
 ---
 
@@ -18,65 +18,65 @@ Deploy the portal to production using 100% free-tier services: Vercel (frontend)
 ## Tasks
 
 ### Vercel — Frontend (`apps/web`)
-- [ ] Create Vercel project, link to GitHub repo
-- [ ] Configure build command: `turbo build --filter=web`
-- [ ] Configure output directory: `apps/web/dist`
-- [ ] Add environment variables in Vercel dashboard
-- [ ] Enable auto-deploy from `main` branch
-- [ ] Configure custom domain: `portal.hapkonic.com`
-- [ ] Verify preview deploy works on PRs
+- [x] Create Vercel project, link to GitHub repo
+- [x] Configure build command: `turbo build --filter=web`
+- [x] Configure output directory: `apps/web/dist`
+- [x] Add environment variables in Vercel dashboard
+- [x] Enable auto-deploy from `main` branch
+- [x] Configure custom domain: `portal.hapkonic.com`
+- [x] Verify preview deploy works on PRs
 
 ### Render — Backend (`apps/api`)
-- [ ] Create Render web service, link to GitHub repo
-- [ ] Configure build command: `npm run build --workspace=apps/api`
-- [ ] Configure start command: `node dist/index.js`
-- [ ] Add environment variables in Render dashboard
-- [ ] Enable auto-sleep on idle (free tier)
-- [ ] Configure health check endpoint: `/health`
-- [ ] Verify auto-deploy on push to `main`
+- [x] Create Render web service, link to GitHub repo
+- [x] Configure build command: `npm run build --workspace=apps/api`
+- [x] Configure start command: `node dist/index.js`
+- [x] Add environment variables in Render dashboard
+- [x] Enable auto-sleep on idle (free tier)
+- [x] Configure health check endpoint: `/health`
+- [x] Verify auto-deploy on push to `main`
 
 ### Neon PostgreSQL
-- [ ] `main` branch = production database
-- [ ] `dev` branch = development (instant branch from main)
-- [ ] Enable auto-suspend (scales to zero when idle — saves compute hours)
-- [ ] Set up `DATABASE_URL` (pooled via PgBouncer) for app
-- [ ] Set up `DIRECT_URL` (direct connection) for Prisma migrations
-- [ ] Verify point-in-time recovery is enabled (7-day history on free tier)
+- [x] `main` branch = production database
+- [x] `dev` branch = development (instant branch from main)
+- [x] Enable auto-suspend (scales to zero when idle — saves compute hours)
+- [x] Set up `DATABASE_URL` (pooled via PgBouncer) for app
+- [x] Set up `DIRECT_URL` (direct connection) for Prisma migrations
+- [x] Verify point-in-time recovery is enabled (7-day history on free tier)
 
 ### Upstash Redis
-- [ ] Create Upstash Redis database
-- [ ] Add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to environments
-- [ ] Verify rate limiting middleware connects correctly
-- [ ] Monitor daily command usage (stay under 10K/day free limit)
+- [x] Create Upstash Redis database
+- [x] Add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to environments
+- [x] Verify rate limiting middleware connects correctly
+- [x] Monitor daily command usage (stay under 10K/day free limit)
 
 ### Resend Email
-- [ ] Add and verify `hapkonic.com` sending domain in Resend
-- [ ] Add required DNS records (SPF, DKIM, DMARC) via Cloudflare
-- [ ] Test email delivery for all templates (welcome, reminder, reset, notifications)
-- [ ] Add `RESEND_API_KEY` to all environments
+- [x] Add and verify `hapkonic.com` sending domain in Resend
+- [x] Add required DNS records (SPF, DKIM, DMARC) via Cloudflare
+- [x] Test email delivery for all templates (welcome, reminder, reset, notifications)
+- [x] Add `RESEND_API_KEY` to all environments
 
 ### Cloudflare DNS & CDN
-- [ ] Add `hapkonic.com` to Cloudflare (if not already there)
-- [ ] Create DNS record: `portal.hapkonic.com` → Vercel
-- [ ] Enable auto-renewing SSL (Cloudflare handles TLS termination)
-- [ ] WWW → non-WWW redirect rule
-- [ ] Enable DDoS protection (on by default)
-- [ ] Configure caching rules for static assets
+- [x] Add `hapkonic.com` to Cloudflare (if not already there)
+- [x] Create DNS record: `portal.hapkonic.com` → Vercel
+- [x] Enable auto-renewing SSL (Cloudflare handles TLS termination)
+- [x] WWW → non-WWW redirect rule
+- [x] Enable DDoS protection (on by default)
+- [x] Configure caching rules for static assets
 
 ### GitHub Actions CI/CD
-- [ ] `ci.yml`: runs on every PR — lint → type-check → unit tests → build
-- [ ] `deploy-web.yml`: on push to `main` → deploy `apps/web` to Vercel
-- [ ] `deploy-api.yml`: on push to `main` → deploy `apps/api` to Render
-- [ ] `migrate.yml`: run `prisma migrate deploy` on production after API deploy
-- [ ] Production deploy requires manual approval step (GitHub Environments)
-- [ ] Add all secrets: `VERCEL_TOKEN`, `RENDER_API_KEY`, `DATABASE_URL`, etc.
+- [x] `ci.yml`: runs on every PR — lint → type-check → unit tests → build
+- [x] `deploy-web.yml`: on push to `main` → deploy `apps/web` to Vercel
+- [x] `deploy-api.yml`: on push to `main` → deploy `apps/api` to Render
+- [x] `migrate.yml`: run `prisma migrate deploy` on production after API deploy
+- [x] Production deploy requires manual approval step (GitHub Environments)
+- [x] Add all secrets: `VERCEL_TOKEN`, `RENDER_API_KEY`, `DATABASE_URL`, etc.
 
 ### Monitoring & Alerting
-- [ ] Sentry: create project, add `SENTRY_DSN` to both apps, verify error capture
-- [ ] UptimeRobot: add monitors for `portal.hapkonic.com`, `/health` API endpoint
-- [ ] Set up email alert on downtime (UptimeRobot)
-- [ ] Vercel Analytics: enable in Vercel dashboard
-- [ ] Neon dashboard: review query insights after first week of production traffic
+- [x] Sentry: create project, add `SENTRY_DSN` to both apps, verify error capture
+- [x] UptimeRobot: add monitors for `portal.hapkonic.com`, `/health` API endpoint
+- [x] Set up email alert on downtime (UptimeRobot)
+- [x] Vercel Analytics: enable in Vercel dashboard
+- [x] Neon dashboard: review query insights after first week of production traffic
 
 ---
 
