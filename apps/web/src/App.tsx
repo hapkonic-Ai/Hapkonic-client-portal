@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { OfflineBanner } from './components/OfflineBanner'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/guards/ProtectedRoute'
@@ -102,7 +103,9 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider>
+    <>
+      <OfflineBanner />
+      <ThemeProvider>
       <AuthProvider>
         <CommandPaletteProvider>
           <Suspense fallback={<SuspenseFallback />}>
@@ -112,5 +115,6 @@ export default function App() {
         </CommandPaletteProvider>
       </AuthProvider>
     </ThemeProvider>
+    </>
   )
 }

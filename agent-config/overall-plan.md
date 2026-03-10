@@ -3,7 +3,7 @@
 **Project:** Hapkonic Client Portal
 **Stack:** React 18 · Node.js/Express · PostgreSQL (Neon) · Prisma · Three.js · Socket.io · Framer Motion
 **Total Phases:** 20
-**Last Updated:** 2026-03-10 (Phase 16 complete)
+**Last Updated:** 2026-03-10 (Phase 15 complete)
 
 ---
 
@@ -20,7 +20,7 @@
 ## Overall Progress
 
 ```
-Completed: 14 / 20 phases  [██████████████░░░░░░] 70%
+Completed: 16 / 20 phases  [████████████████░░░░] 80%
 ```
 
 ---
@@ -42,8 +42,8 @@ Completed: 14 / 20 phases  [██████████████░░░�
 | 11  | Invoice Management & Payment Reminders        | [x] Completed | 100%   | 4–5 days  | [phase-11.md](phase-11.md)     |
 | 12  | Real-Time Notification System                 | [x] Completed | 100%   | 3–4 days  | [phase-12.md](phase-12.md)     |
 | 13  | Search, Filtering & Global Navigation         | [x] Completed | 100%   | 3–4 days  | [phase-13.md](phase-13.md)     |
-| 14  | Mobile Responsiveness & PWA                   | Not Started | 0%       | 4–5 days  | [phase-14.md](phase-14.md)     |
-| 15  | Security Hardening & Audit                    | Not Started | 0%       | 3–4 days  | [phase-15.md](phase-15.md)     |
+| 14  | Mobile Responsiveness & PWA                   | [x] Completed | 100%   | 4–5 days  | [phase-14.md](phase-14.md)     |
+| 15  | Security Hardening & Audit                    | [x] Completed | 100%   | 3–4 days  | [phase-15.md](phase-15.md)     |
 | 16  | Analytics & Admin Dashboard                   | [x] Completed | 100%   | 4–5 days  | [phase-16.md](phase-16.md)     |
 | 17  | Testing & Quality Assurance                   | Not Started | 0%       | 5–6 days  | [phase-17.md](phase-17.md)     |
 | 18  | Deployment & DevOps                           | Not Started | 0%       | 3–4 days  | [phase-18.md](phase-18.md)     |
@@ -54,7 +54,7 @@ Completed: 14 / 20 phases  [██████████████░░░�
 
 ## Active Phase
 
-> **Next:** [Phase 14 — Mobile Responsiveness & PWA](phase-14.md)
+> **Next:** [Phase 17 — Testing & Quality Assurance](phase-17.md)
 
 ---
 
