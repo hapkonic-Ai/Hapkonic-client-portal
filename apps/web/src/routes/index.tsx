@@ -3,6 +3,7 @@ import { lazy } from 'react'
 // ── Public ──
 export const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 export const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
+export const ChangePasswordPage = lazy(() => import('@/pages/auth/ChangePasswordPage'))
 export const LandingPage = lazy(() => import('@/pages/LandingPage'))
 
 // ── Client Portal ──
