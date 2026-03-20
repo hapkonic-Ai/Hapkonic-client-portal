@@ -5,6 +5,7 @@ import { OnboardingTour } from './pages/portal/OnboardingTour'
 import { FeedbackWidget } from './components/FeedbackWidget'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ToastProvider } from '@/components/ui/Toast'
 import { ProtectedRoute } from '@/components/guards/ProtectedRoute'
 import { PortalLayout } from '@/layouts/PortalLayout'
 import { AdminLayout } from '@/layouts/AdminLayout'
@@ -52,7 +53,7 @@ function AppRoutes() {
     return (
       <div className="flex h-screen items-center justify-center" style={{ background: 'var(--bg-base)' }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-xl gradient-primary animate-pulse" />
+          <img src="/hapkonic-logo-removebg-preview.png" alt="Hapkonic" className="w-14 h-14 object-contain animate-pulse" />
           <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--primary-500)', borderTopColor: 'transparent' }} />
         </div>
       </div>
@@ -109,6 +110,7 @@ export default function App() {
       <OfflineBanner />
       <ThemeProvider>
       <AuthProvider>
+        <ToastProvider>
         <CommandPaletteProvider>
           <Suspense fallback={<SuspenseFallback />}>
             <AppRoutes />
@@ -117,6 +119,7 @@ export default function App() {
           <OnboardingTour />
           <FeedbackWidget />
         </CommandPaletteProvider>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
     </>

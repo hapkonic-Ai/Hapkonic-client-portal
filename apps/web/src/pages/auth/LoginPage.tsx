@@ -111,8 +111,16 @@ export default function LoginPage() {
         <ThreePanel />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl gradient-primary" />
+            <img src="/hapkonic-logo-removebg-preview.png" alt="Hapkonic" className="w-9 h-9 object-contain" />
             <span className="text-xl font-bold text-white tracking-tight">Hapkonic</span>
+          </div>
+          {/* Centered logo */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <img
+              src="/hapkonic-logo-removebg-preview.png"
+              alt=""
+              className="w-40 h-40 object-contain opacity-10"
+            />
           </div>
           <div>
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
@@ -142,7 +150,7 @@ export default function LoginPage() {
           className="w-full max-w-sm"
         >
           <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <div className="w-8 h-8 rounded-xl gradient-primary" />
+            <img src="/hapkonic-logo-removebg-preview.png" alt="Hapkonic" className="w-8 h-8 object-contain" />
             <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Hapkonic</span>
           </div>
 
