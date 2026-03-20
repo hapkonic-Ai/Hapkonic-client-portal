@@ -73,8 +73,9 @@ export function auditLog(action: string, entityType: string) {
             userId: req.user.userId,
             action,
             entityType,
-            entityId: req.params['id'],
-            metadata: { body: sanitizeBody(req.body), query: req.query },
+            entityId: req.params['id'] ?? null,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            metadata: { body: sanitizeBody(req.body), query: req.query } as any,
             ipAddress: req.ip,
           },
         })

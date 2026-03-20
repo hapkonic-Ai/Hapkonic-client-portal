@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "Node",
