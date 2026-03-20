@@ -100,6 +100,7 @@ model User {
   client              Client?   @relation(fields: [clientId], references: [id])
   name                String
   avatar              String?
+  avatarKey           String?   @map("avatar_key")
   isActive            Boolean   @default(true) @map("is_active")
   forcePasswordReset  Boolean   @default(true) @map("force_password_reset")
   lastLoginAt         DateTime? @map("last_login_at")
@@ -110,6 +111,7 @@ model User {
 
   comments            MilestoneComment[]
   progressUpdates     ProgressUpdate[]
+  progressComments    ProgressComment[]
   adminLogs           AdminLog[]
   notifications       Notification[]
   documentUploads     Document[]         @relation("UploadedBy")
@@ -319,6 +321,7 @@ model ProgressComment {
   progressUpdateId String          @map("progress_update_id")
   progressUpdate   ProgressUpdate  @relation(fields: [progressUpdateId], references: [id], onDelete: Cascade)
   userId           String          @map("user_id")
+  user             User            @relation(fields: [userId], references: [id])
   body             String
   parentId         String?         @map("parent_id")
   parent           ProgressComment?   @relation("ProgressCommentReplies", fields: [parentId], references: [id])
