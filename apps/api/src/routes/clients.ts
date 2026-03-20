@@ -10,7 +10,7 @@ clientsRouter.use(authenticate)
 
 const createClientSchema = z.object({
   companyName: z.string().min(1),
-  logo: z.string().url().optional(),
+  logo: z.string().optional(),
   industry: z.string().optional(),
   contactName: z.string().optional(),
   contactEmail: z.string().email().optional(),

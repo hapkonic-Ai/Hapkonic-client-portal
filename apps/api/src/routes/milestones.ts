@@ -13,7 +13,7 @@ const createSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
-  targetDate: z.string().datetime().optional(),
+  targetDate: z.string().optional(),
   order: z.number().int().optional(),
 })
 
@@ -34,6 +34,7 @@ milestonesRouter.get('/', async (req, res, next) => {
       include: {
         tasks: { orderBy: { order: 'asc' } },
         _count: { select: { comments: true } },
+        project: { select: { id: true, name: true, client: { select: { id: true, companyName: true } } } },
       },
     })
     res.json({ milestones })
@@ -125,5 +126,18 @@ milestonesRouter.patch('/comments/:commentId/resolve', authorize('admin', 'manag
       data: { isResolved: true },
     })
     res.json({ comment })
+  } catch (err) { next(err) }
+})
+
+// DELETE /milestones/comments/:commentId
+milestonesRouter.delete('/comments/:commentId', async (req, res, next) => {
+  try {
+    const comment = await prisma.milestoneComment.findUnique({ where: { id: req.params['commentId'] } })
+    if (!comment) throw new AppError(404, 'Comment not found', 'NOT_FOUND')
+    const isOwner = comment.userId === req.user!.userId
+    const isAdminOrManager = req.user!.role === 'admin' || req.user!.role === 'manager'
+    if (!isOwner && !isAdminOrManager) throw new AppError(403, 'Not allowed', 'FORBIDDEN')
+    await prisma.milestoneComment.delete({ where: { id: req.params['commentId'] } })
+    res.json({ message: 'Comment deleted' })
   } catch (err) { next(err) }
 })

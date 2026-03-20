@@ -23,7 +23,7 @@ function createLimiter(requests: number, windowSeconds: number) {
 }
 
 export const limiters = {
-  login:         createLimiter(5,   15 * 60), // 5 per 15 min
+  login:         createLimiter(20,  15 * 60), // 20 per 15 min
   forgotPw:      createLimiter(3,   60 * 60), // 3 per hour
   api:           createLimiter(100, 60),       // 100 per min per user
   fileUpload:    createLimiter(10,  60),       // 10 per min
@@ -32,7 +32,7 @@ export const limiters = {
 export function rateLimit(limiterKey: keyof typeof limiters, identifierFn?: (req: Request) => string) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const limiter = limiters[limiterKey]
-    if (!limiter) return next() // skip if no Redis in dev
+    if (!limiter || process.env['NODE_ENV'] === 'development') return next() // skip if no Redis or in dev
 
     const identifier = identifierFn
       ? identifierFn(req)

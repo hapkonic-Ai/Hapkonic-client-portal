@@ -9,10 +9,12 @@ import { invoicesRouter } from './invoices'
 import { progressRouter } from './progress'
 import { notificationsRouter } from './notifications'
 import { adminRouter } from './admin'
+import { usersRouter } from './users'
 
 export const apiRouter = Router()
 
 apiRouter.use('/auth', authRouter)
+apiRouter.use('/users', usersRouter)
 apiRouter.use('/clients', clientsRouter)
 apiRouter.use('/projects', projectsRouter)
 apiRouter.use('/documents', documentsRouter)

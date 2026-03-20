@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { signAccessToken, signRefreshToken, verifyRefreshToken, cookieOptions } from '../lib/jwt'
-import { redisSet, redisGet, redisDel } from '../lib/redis'
+import { redisSet, redisGet, redisDel, getRedis } from '../lib/redis'
 import { authenticate } from '../middleware/auth'
 import { validate } from '../middleware/validate'
 import { rateLimit } from '../middleware/rateLimiter'
@@ -97,8 +97,12 @@ authRouter.post('/refresh', async (req, res, next) => {
     if (!token) throw new AppError(401, 'No refresh token', 'UNAUTHENTICATED')
 
     const { userId } = verifyRefreshToken(token)
-    const stored = await redisGet<string>(`refresh:${userId}`)
-    if (stored !== token) throw new AppError(401, 'Refresh token revoked', 'TOKEN_REVOKED')
+    // If Redis is configured, verify the stored token matches (revocation check)
+    // If Redis is not configured (dev/no-Upstash), trust the JWT signature alone
+    if (getRedis()) {
+      const stored = await redisGet<string>(`refresh:${userId}`)
+      if (stored !== token) throw new AppError(401, 'Refresh token revoked', 'TOKEN_REVOKED')
+    }
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user || !user.isActive) throw new AppError(401, 'User not found', 'UNAUTHENTICATED')

@@ -12,8 +12,8 @@ const createSchema = z.object({
   clientId: z.string().cuid(),
   invoiceNumber: z.string().min(1),
   amount: z.number().positive(),
-  dueDate: z.string().datetime(),
-  pdfUrl: z.string().url().optional(),
+  dueDate: z.string(),
+  pdfUrl: z.string().optional(),
   pdfKey: z.string().optional(),
   notes: z.string().optional(),
 })
