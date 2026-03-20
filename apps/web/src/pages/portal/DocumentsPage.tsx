@@ -46,7 +46,40 @@ function docStatus(doc: Document): { label: string; color: string } {
 // ── Document Viewer ───────────────────────────────────────────────────────────
 
 function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }) {
-  const canPreview = doc.mimeType?.includes('pdf') || doc.mimeType?.startsWith('image/')
+  const [csvData, setCsvData] = useState<string[][] | null>(null)
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const isPdf = doc.mimeType?.includes('pdf')
+  const isImage = doc.mimeType?.startsWith('image/')
+  const isCsv = doc.mimeType?.includes('csv') || doc.mimeType?.includes('text/plain')
+  const isExcel = doc.mimeType?.includes('sheet') || doc.mimeType?.includes('excel')
+  const canPreview = isPdf || isImage || isCsv
+
+  // Fetch as blob to avoid cross-origin/helmet iframe restrictions
+  useEffect(() => {
+    if (!isPdf && !isImage) return
+    let url: string
+    fetch(doc.fileUrl)
+      .then(r => r.blob())
+      .then(blob => {
+        url = URL.createObjectURL(blob)
+        setBlobUrl(url)
+      })
+      .catch(() => setBlobUrl(doc.fileUrl))
+    return () => { if (url) URL.revokeObjectURL(url) }
+  }, [doc.fileUrl, isPdf, isImage])
+
+  useEffect(() => {
+    if (!isCsv) return
+    fetch(doc.fileUrl)
+      .then(r => r.text())
+      .then(text => {
+        const rows = text.split('\n').filter(Boolean).map(r =>
+          r.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''))
+        )
+        setCsvData(rows)
+      })
+      .catch(() => setCsvData(null))
+  }, [doc.fileUrl, isCsv])
 
   return (
     <motion.div
@@ -80,20 +113,68 @@ function DocumentViewer({ doc, onClose }: { doc: Document; onClose: () => void }
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {canPreview ? (
-          doc.mimeType?.startsWith('image/') ? (
-            <div className="flex items-center justify-center h-full">
-              <img src={doc.fileUrl} alt={doc.label} className="max-w-full max-h-full object-contain rounded-xl" />
+        {isPdf && blobUrl && (
+          <iframe
+            src={blobUrl}
+            className="w-full h-full rounded-xl"
+            title={doc.label}
+            style={{ minHeight: '70vh', background: '#fff' }}
+          />
+        )}
+        {isPdf && !blobUrl && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-sm" style={{ color: 'var(--text-muted)' }}>Loading PDF…</div>
+          </div>
+        )}
+        {isImage && blobUrl && (
+          <div className="flex items-center justify-center h-full">
+            <img src={blobUrl} alt={doc.label} className="max-w-full max-h-full object-contain rounded-xl" />
+          </div>
+        )}
+        {isImage && !blobUrl && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-sm" style={{ color: 'var(--text-muted)' }}>Loading…</div>
+          </div>
+        )}
+        {isCsv && csvData && (
+          <div className="overflow-auto rounded-xl border" style={{ borderColor: 'var(--border-default)' }}>
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ background: 'var(--bg-secondary)' }}>
+                  {csvData[0]?.map((h, i) => (
+                    <th key={i} className="px-3 py-2 text-left font-semibold border-b" style={{ color: 'var(--text-primary)', borderColor: 'var(--border-default)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {csvData.slice(1).map((row, ri) => (
+                  <tr key={ri} className="hover:bg-[var(--bg-secondary)]" style={{ borderBottom: '1px solid var(--border-default)' }}>
+                    {row.map((cell, ci) => (
+                      <td key={ci} className="px-3 py-2" style={{ color: 'var(--text-secondary)' }}>{cell}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {isCsv && !csvData && (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-sm" style={{ color: 'var(--text-muted)' }}>Loading CSV data…</div>
+          </div>
+        )}
+        {isExcel && (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <div className="w-24 h-24 rounded-3xl flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.1)' }}>
+              <FileIcon mimeType={doc.mimeType} size={40} />
             </div>
-          ) : (
-            <iframe
-              src={`${doc.fileUrl}#toolbar=0`}
-              className="w-full h-full rounded-xl"
-              title={doc.label}
-              style={{ minHeight: '70vh', background: '#fff' }}
-            />
-          )
-        ) : (
+            <p style={{ color: 'var(--text-secondary)' }}>Excel files cannot be previewed in the browser.</p>
+            <a href={doc.fileUrl} download target="_blank" rel="noopener noreferrer">
+              <Button leftIcon={<Download size={16} />}>Download to view</Button>
+            </a>
+          </div>
+        )}
+        {!canPreview && !isExcel && (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="w-24 h-24 rounded-3xl flex items-center justify-center" style={{ background: 'var(--bg-elevated)' }}>
               <FileIcon mimeType={doc.mimeType} size={40} />
@@ -215,7 +296,6 @@ function DocumentRow({ doc, onView, onDownload, index }: {
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
-  const [filtered, setFiltered] = useState<Document[]>([])
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState<DocumentCategory | 'all'>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -229,14 +309,28 @@ export default function DocumentsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => {
+  const filtered = (() => {
     const q = search.toLowerCase()
-    setFiltered(documents.filter(d => {
+    return documents.filter(d => {
       const matchCat = catFilter === 'all' || d.category === catFilter
       const matchSearch = (d.label ?? '').toLowerCase().includes(q) || (d.project?.name ?? '').toLowerCase().includes(q)
       return matchCat && matchSearch
-    }))
-  }, [search, catFilter, documents])
+    })
+  })()
+
+  // Group by project
+  const grouped: { projectId: string; projectName: string; docs: Document[] }[] = []
+  const seen = new Map<string, number>()
+  for (const doc of filtered) {
+    const pid = doc.project?.id ?? '__none__'
+    const pname = doc.project?.name ?? 'No Project'
+    if (seen.has(pid)) {
+      grouped[seen.get(pid)!].docs.push(doc)
+    } else {
+      seen.set(pid, grouped.length)
+      grouped.push({ projectId: pid, projectName: pname, docs: [doc] })
+    }
+  }
 
   function handleView(doc: Document) {
     setViewing(doc)
@@ -309,7 +403,7 @@ export default function DocumentsPage() {
         ))}
       </div>
 
-      {/* Search + Filter */}
+      {/* Search + Category filter */}
       <div className="flex gap-3 flex-wrap">
         <Input
           placeholder="Search documents..."
@@ -362,19 +456,18 @@ export default function DocumentsPage() {
       </AnimatePresence>
 
       {loading ? (
-        viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-48 rounded-2xl animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
-            ))}
-          </div>
-        )
+        <div className="space-y-8">
+          {[1, 2].map(i => (
+            <div key={i}>
+              <div className="h-5 rounded w-40 mb-4 animate-pulse" style={{ background: 'var(--bg-elevated)' }} />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} className="h-48 rounded-2xl animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
         <Card className="p-16 text-center">
           <FileText size={44} className="mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
@@ -383,30 +476,54 @@ export default function DocumentsPage() {
             {search || catFilter !== 'all' ? 'Try clearing your filters.' : 'Documents shared with you will appear here.'}
           </p>
         </Card>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filtered.map((doc, i) => (
-            <DocumentCard key={doc.id} doc={doc} index={i} onView={handleView} onDownload={handleDownload} />
-          ))}
-        </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--border-default)' }}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-default)' }}>
-                {['Name', 'Category', 'Size', 'Uploaded', 'Status', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <AnimatePresence>
-                {filtered.map((doc, i) => (
-                  <DocumentRow key={doc.id} doc={doc} index={i} onView={handleView} onDownload={handleDownload} />
-                ))}
-              </AnimatePresence>
-            </tbody>
-          </table>
+        <div className="space-y-8">
+          {grouped.map(({ projectId, projectName, docs }) => (
+            <div key={projectId}>
+              {/* Project section header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: 'var(--color-primary-500)20', color: 'var(--color-primary-500)' }}
+                >
+                  <FileText size={14} />
+                </div>
+                <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{projectName}</h2>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
+                >
+                  {docs.length} {docs.length === 1 ? 'file' : 'files'}
+                </span>
+                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
+              </div>
+
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {docs.map((doc, i) => (
+                    <DocumentCard key={doc.id} doc={doc} index={i} onView={handleView} onDownload={handleDownload} />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: 'var(--border-default)' }}>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-default)' }}>
+                        {['Name', 'Category', 'Size', 'Uploaded', 'Status', ''].map(h => (
+                          <th key={h} className="px-4 py-3 text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {docs.map((doc, i) => (
+                        <DocumentRow key={doc.id} doc={doc} index={i} onView={handleView} onDownload={handleDownload} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
