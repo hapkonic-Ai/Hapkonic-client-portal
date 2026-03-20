@@ -47,6 +47,21 @@ export function authorize(...roles: Role[]) {
   }
 }
 
+const SENSITIVE_FIELDS = new Set([
+  'password', 'newPassword', 'currentPassword', 'passwordHash',
+  'otp', 'token', 'refreshToken', 'accessToken', 'secret',
+])
+
+function sanitizeBody(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body
+  return Object.fromEntries(
+    Object.entries(body as Record<string, unknown>).map(([k, v]) => [
+      k,
+      SENSITIVE_FIELDS.has(k) ? '[REDACTED]' : v,
+    ])
+  )
+}
+
 export function auditLog(action: string, entityType: string) {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     // Lazy import to avoid circular deps
@@ -59,7 +74,7 @@ export function auditLog(action: string, entityType: string) {
             action,
             entityType,
             entityId: req.params['id'],
-            metadata: { body: req.body, query: req.query },
+            metadata: { body: sanitizeBody(req.body), query: req.query },
             ipAddress: req.ip,
           },
         })
