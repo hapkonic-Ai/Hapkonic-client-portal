@@ -13,7 +13,7 @@ const createSchema = z.object({
   title: z.string().min(1),
   startTime: z.string().datetime(),
   endTime: z.string().datetime(),
-  meetLink: z.string().url().optional(),
+  meetLink: z.string().optional(),
   type: z.enum(['kickoff', 'review', 'standup', 'demo', 'ad_hoc']).optional(),
   agenda: z.string().optional(),
 })
@@ -53,6 +53,12 @@ meetingsRouter.get('/:id', async (req, res, next) => {
       include: { project: { select: { id: true, name: true, clientId: true } } },
     })
     if (!meeting) throw new AppError(404, 'Meeting not found', 'NOT_FOUND')
+
+    // Clients can only view meetings for their own projects
+    if (req.user!.role === 'client' && meeting.project?.clientId !== req.user!.clientId) {
+      throw new AppError(403, 'Forbidden', 'FORBIDDEN')
+    }
+
     res.json({ meeting })
   } catch (err) { next(err) }
 })
@@ -68,6 +74,7 @@ meetingsRouter.post('/', authorize('admin', 'manager'), validate(createSchema), 
         endTime: new Date(data.endTime),
         createdById: req.user!.userId,
       },
+      include: { project: { select: { id: true, name: true } } },
     })
     // TODO: Phase 7 — sync to Google Calendar
     res.status(201).json({ meeting })

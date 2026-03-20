@@ -13,8 +13,8 @@ const createSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   status: z.enum(['planning', 'active', 'on_hold', 'completed', 'cancelled']).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 })
 
 const updateSchema = createSchema.omit({ clientId: true }).partial()
@@ -56,6 +56,12 @@ projectsRouter.get('/:id', async (req, res, next) => {
       },
     })
     if (!project) throw new AppError(404, 'Project not found', 'NOT_FOUND')
+
+    // Clients can only view their own projects
+    if (req.user!.role === 'client' && project.clientId !== req.user!.clientId) {
+      throw new AppError(403, 'Forbidden', 'FORBIDDEN')
+    }
+
     res.json({ project })
   } catch (err) {
     next(err)
