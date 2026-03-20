@@ -12,7 +12,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -52,9 +51,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b shrink-0"
            style={{ borderColor: 'var(--border-default)' }}>
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0 gradient-primary">
-          <Zap size={16} className="text-white" />
-        </div>
+        <img src="/hapkonic-logo-removebg-preview.png" alt="Hapkonic" className="w-8 h-8 object-contain shrink-0" />
         <motion.span
           animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : 'auto' }}
           transition={{ duration: 0.2 }}
