@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
 interface ModalProps {
-  open: boolean
+  isOpen: boolean
   onClose: () => void
   title?: string
   children: ReactNode
@@ -23,7 +23,7 @@ const sizeStyles: Record<ModalSize, string> = {
   full: 'max-w-5xl',
 }
 
-export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
+export function Modal({ isOpen: open, onClose, title, children, size = 'md', className }: ModalProps) {
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
