@@ -37,8 +37,20 @@ progressRouter.get('/', async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { id: true, name: true, avatar: true } },
+        project: { select: { id: true, name: true, client: { select: { companyName: true } } } },
         _count: { select: { comments: true, reactions: true } },
         reactions: true,
+        comments: {
+          where: { parentId: null, isDeleted: false },
+          orderBy: { createdAt: 'asc' },
+          include: {
+            user: { select: { id: true, name: true, avatar: true } },
+            replies: {
+              where: { isDeleted: false },
+              include: { user: { select: { id: true, name: true, avatar: true } } },
+            },
+          },
+        },
       },
     })
     res.json({ updates })
@@ -107,6 +119,19 @@ progressRouter.post('/:id/comments', validate(commentSchema), async (req, res, n
       data: { progressUpdateId: req.params['id'], userId: req.user!.userId, body, parentId },
     })
     res.status(201).json({ comment })
+  } catch (err) { next(err) }
+})
+
+// DELETE /progress/comments/:commentId
+progressRouter.delete('/comments/:commentId', async (req, res, next) => {
+  try {
+    const comment = await prisma.progressComment.findUnique({ where: { id: req.params['commentId'] } })
+    if (!comment) throw new AppError(404, 'Comment not found', 'NOT_FOUND')
+    const isOwner = comment.userId === req.user!.userId
+    const isAdminOrManager = req.user!.role === 'admin' || req.user!.role === 'manager'
+    if (!isOwner && !isAdminOrManager) throw new AppError(403, 'Not allowed', 'FORBIDDEN')
+    await prisma.progressComment.update({ where: { id: req.params['commentId'] }, data: { isDeleted: true } })
+    res.json({ message: 'Comment deleted' })
   } catch (err) { next(err) }
 })
 
