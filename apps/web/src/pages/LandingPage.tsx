@@ -153,7 +153,7 @@ function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="#" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl gradient-primary" />
+          <img src="/hapkonic-logo-removebg-preview.png" className="w-8 h-8 object-contain" alt="Hapkonic" />
           <span className="text-white font-bold text-lg">Hapkonic</span>
         </a>
         <nav className="hidden md:flex items-center gap-8">
