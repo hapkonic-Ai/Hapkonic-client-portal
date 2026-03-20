@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Video, Bell, ArrowRight, TrendingUp, FolderOpen, ExternalLink,
 } from 'lucide-react'
@@ -33,7 +34,7 @@ const INVOICE_STATUS_LABEL: Record<InvoiceStatus, string> = {
 
 const PROJECT_STATUS_VARIANT: Record<string, BadgeVariant> = {
   planning:    'info',
-  in_progress: 'primary',
+  active:      'primary',
   on_hold:     'warning',
   completed:   'success',
   cancelled:   'neutral',
@@ -41,7 +42,7 @@ const PROJECT_STATUS_VARIANT: Record<string, BadgeVariant> = {
 
 const PROJECT_STATUS_LABEL: Record<string, string> = {
   planning:    'Planning',
-  in_progress: 'In Progress',
+  active:      'Active',
   on_hold:     'On Hold',
   completed:   'Completed',
   cancelled:   'Cancelled',
@@ -87,7 +88,7 @@ function ProgressBar({ pct }: { pct: number }) {
 
 // ── Project Card ───────────────────────────────────────────────────────────────
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({ project, index, onView }: { project: Project; index: number; onView: (id: string) => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -120,6 +121,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         variant="ghost"
         rightIcon={<ArrowRight size={13} />}
         className="self-start mt-auto"
+        onClick={() => onView(project.id)}
       >
         View Project
       </Button>
@@ -170,6 +172,7 @@ function NextMeetingWidget({ meeting }: { meeting: Meeting }) {
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [projects, setProjects] = useState<Project[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -282,7 +285,7 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((p, i) => <ProjectCard key={p.id} project={p} index={i} />)}
+            {projects.map((p, i) => <ProjectCard key={p.id} project={p} index={i} onView={id => navigate(`/portal/roadmap?project=${id}`)} />)}
           </div>
         )}
       </section>
@@ -329,7 +332,7 @@ export default function DashboardPage() {
                       {inv.invoiceNumber}
                     </p>
                     <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                      {inv.project?.name ?? '—'} · Due {formatDate(inv.dueDate)}
+                      Due {formatDate(inv.dueDate)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -337,7 +340,7 @@ export default function DashboardPage() {
                       {INVOICE_STATUS_LABEL[inv.status]}
                     </Badge>
                     <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {formatCurrency(inv.amount, inv.currency)}
+                      {formatCurrency(inv.amount)}
                     </span>
                   </div>
                 </motion.div>
