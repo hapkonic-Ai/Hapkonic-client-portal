@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight, ChevronLeft, Zap } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { useAuth } from '../../contexts/AuthContext'
 
 const STEPS = [
   {
@@ -44,17 +45,20 @@ const STEPS = [
 const STORAGE_KEY = 'hapkonic_tour_completed'
 
 export function OnboardingTour() {
+  const { user } = useAuth()
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState(0)
 
   useEffect(() => {
+    // Only show portal tour for client users
+    if (!user || user.role === 'admin' || user.role === 'manager') return
     const done = localStorage.getItem(STORAGE_KEY)
     if (!done) {
       // Small delay to let the page settle
       const t = setTimeout(() => setVisible(true), 1200)
       return () => clearTimeout(t)
     }
-  }, [])
+  }, [user])
 
   function complete() {
     localStorage.setItem(STORAGE_KEY, 'true')
@@ -71,6 +75,7 @@ export function OnboardingTour() {
   }
 
   const current = STEPS[step]
+  if (!current) return null
   const isLast = step === STEPS.length - 1
 
   return (

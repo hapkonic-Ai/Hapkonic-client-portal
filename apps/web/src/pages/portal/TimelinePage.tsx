@@ -1,44 +1,43 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Circle, AlertTriangle, Clock, ChevronDown, ChevronUp, MessageSquare, Send } from 'lucide-react'
+import { CheckCircle2, Circle, AlertTriangle, Clock, ChevronDown, ChevronUp, MessageSquare, Send, Trash2 } from 'lucide-react'
 import { milestonesApi, type Milestone, type MilestoneStatus, type MilestoneComment } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
 import { Badge, type BadgeVariant } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
+import { useAuth } from '../../contexts/AuthContext'
+import { useConfirm } from '../../components/ui/ConfirmDialog'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<MilestoneStatus, string> = {
   completed:   '#22c55e',
   in_progress: '#3b82f6',
-  at_risk:     '#f59e0b',
-  delayed:     '#ef4444',
-  upcoming:    'var(--text-muted)',
+  blocked:     '#ef4444',
+  not_started: 'var(--text-muted)',
 }
 
 const STATUS_VARIANT: Record<MilestoneStatus, BadgeVariant> = {
   completed:   'success',
   in_progress: 'info',
-  at_risk:     'warning',
-  delayed:     'error',
-  upcoming:    'neutral',
+  blocked:     'error',
+  not_started: 'neutral',
 }
 
 const STATUS_LABEL: Record<MilestoneStatus, string> = {
   completed:   'Completed',
   in_progress: 'In Progress',
-  at_risk:     'At Risk',
-  delayed:     'Delayed',
-  upcoming:    'Upcoming',
+  blocked:     'Blocked',
+  not_started: 'Not Started',
 }
 
-const ALL_STATUSES: MilestoneStatus[] = ['completed', 'in_progress', 'at_risk', 'delayed', 'upcoming']
+const ALL_STATUSES: MilestoneStatus[] = ['completed', 'in_progress', 'blocked', 'not_started']
 
 function StatusIcon({ status, size = 20 }: { status: MilestoneStatus; size?: number }) {
   const color = STATUS_COLOR[status]
   if (status === 'completed') return <CheckCircle2 size={size} style={{ color }} />
   if (status === 'in_progress') return <Clock size={size} style={{ color }} />
-  if (status === 'at_risk' || status === 'delayed') return <AlertTriangle size={size} style={{ color }} />
+  if (status === 'blocked') return <AlertTriangle size={size} style={{ color }} />
   return <Circle size={size} style={{ color }} />
 }
 
@@ -112,15 +111,53 @@ interface MilestoneNodeProps {
   milestone: Milestone & { comments?: MilestoneComment[] }
   index: number
   isLast: boolean
+  currentUserId?: string
 }
 
-function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
+function MilestoneNode({ milestone, index, isLast, currentUserId }: MilestoneNodeProps) {
   const [expanded, setExpanded] = useState(false)
   const [comments, setComments] = useState<MilestoneComment[]>(milestone.comments ?? [])
+  const [commentsLoaded, setCommentsLoaded] = useState(false)
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { confirm, dialog: confirmDialog } = useConfirm()
   const color = STATUS_COLOR[milestone.status]
   const commentCount = milestone._count?.comments ?? comments.length
 
+  async function handleExpand() {
+    const next = !expanded
+    setExpanded(next)
+    if (next && !commentsLoaded) {
+      setLoadingComments(true)
+      try {
+        const { milestone: full } = await milestonesApi.get(milestone.id)
+        setComments(full.comments ?? [])
+        setCommentsLoaded(true)
+      } finally {
+        setLoadingComments(false)
+      }
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    const ok = await confirm({
+      title: 'Delete Comment',
+      message: 'Are you sure you want to delete this comment? This cannot be undone.',
+      confirmLabel: 'Delete',
+    })
+    if (!ok) return
+    setDeletingId(commentId)
+    try {
+      await milestonesApi.deleteComment(commentId)
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
+    <>
+    {confirmDialog}
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       whileInView={{ opacity: 1, x: 0 }}
@@ -149,7 +186,7 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
         <div
           className="rounded-xl border p-4 cursor-pointer transition-colors"
           style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-default)' }}
-          onClick={() => setExpanded(e => !e)}
+          onClick={handleExpand}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -161,9 +198,9 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
                   {STATUS_LABEL[milestone.status]}
                 </Badge>
               </div>
-              {milestone.dueDate && (
+              {milestone.targetDate && (
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Due {formatDate(milestone.dueDate)}
+                  Due {formatDate(milestone.targetDate)}
                   {milestone.completedAt && ` · Completed ${formatDate(milestone.completedAt)}`}
                 </p>
               )}
@@ -200,10 +237,16 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
                 )}
 
                 {/* Comments */}
-                {comments.length > 0 && (
+                {loadingComments ? (
+                  <div className="space-y-2 mb-3">
+                    {[1, 2].map(i => (
+                      <div key={i} className="h-10 rounded-lg animate-pulse" style={{ background: 'var(--bg-elevated)' }} />
+                    ))}
+                  </div>
+                ) : comments.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {comments.map(c => (
-                      <div key={c.id} className="flex gap-2">
+                      <div key={c.id} className="flex gap-2 group">
                         <div
                           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                           style={{ background: 'var(--color-primary-500)', color: '#fff' }}
@@ -214,10 +257,24 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
                           className="flex-1 rounded-lg px-3 py-2 text-xs"
                           style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)' }}
                         >
-                          <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {c.user?.name ?? 'User'}
-                          </span>
-                          <span className="ml-2 opacity-60">{formatDate(c.createdAt, { month: 'short', day: 'numeric' })}</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {c.user?.name ?? 'User'}
+                              </span>
+                              <span className="ml-2 opacity-60">{formatDate(c.createdAt, { month: 'short', day: 'numeric' })}</span>
+                            </div>
+                            {c.userId === currentUserId && (
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                disabled={deletingId === c.id}
+                                className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400 disabled:opacity-40"
+                                style={{ color: 'var(--text-muted)' }}
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            )}
+                          </div>
                           <p className="mt-0.5">{c.body}</p>
                         </div>
                       </div>
@@ -235,6 +292,7 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
         </AnimatePresence>
       </div>
     </motion.div>
+    </>
   )
 }
 
@@ -243,6 +301,7 @@ function MilestoneNode({ milestone, index, isLast }: MilestoneNodeProps) {
 type FilterTab = 'all' | MilestoneStatus
 
 export default function TimelinePage() {
+  const { user } = useAuth()
   const [milestones, setMilestones] = useState<Milestone[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -332,6 +391,7 @@ export default function TimelinePage() {
                 milestone={m}
                 index={i}
                 isLast={i === displayed.length - 1}
+                currentUserId={user?.id}
               />
             ))
         }

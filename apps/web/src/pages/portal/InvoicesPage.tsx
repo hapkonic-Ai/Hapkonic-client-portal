@@ -190,10 +190,10 @@ export default function InvoicesPage() {
                         {inv.invoiceNumber}
                       </td>
                       <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>
-                        {inv.project?.name ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                        <span style={{ color: 'var(--text-muted)' }}>—</span>
                       </td>
                       <td className="px-4 py-3 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                        {formatCurrency(inv.amount, inv.currency)}
+                        {formatCurrency(inv.amount)}
                       </td>
                       <td
                         className="px-4 py-3 text-xs"
