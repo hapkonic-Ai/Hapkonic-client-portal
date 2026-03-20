@@ -7,8 +7,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, isInitializing } = useAuth()
   const location = useLocation()
+
+  // Still restoring session from cookie — don't redirect yet
+  if (isInitializing) return null
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
