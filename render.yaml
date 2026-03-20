@@ -15,9 +15,7 @@ services:
       - key: CLIENT_URL
         sync: false   # Set to your Vercel URL, e.g. https://hapkonic.vercel.app
       - key: DATABASE_URL
-        sync: false   # Neon PostgreSQL connection string (pooled)
-      - key: DIRECT_URL
-        sync: false   # Neon PostgreSQL direct connection string (for migrations)
+        sync: false   # Neon PostgreSQL connection string (direct, not pooler)
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
