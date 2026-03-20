@@ -325,7 +325,7 @@ export default function DocumentsPage() {
     const pid = doc.project?.id ?? '__none__'
     const pname = doc.project?.name ?? 'No Project'
     if (seen.has(pid)) {
-      grouped[seen.get(pid)!].docs.push(doc)
+      grouped[seen.get(pid)!]!.docs.push(doc)
     } else {
       seen.set(pid, grouped.length)
       grouped.push({ projectId: pid, projectName: pname, docs: [doc] })

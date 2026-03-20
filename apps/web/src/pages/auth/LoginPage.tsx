@@ -42,7 +42,7 @@ function ThreePanel() {
       const mat = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.3, metalness: 0.7 })
       const mesh = new THREE.Mesh(g, mat)
       const wire = new THREE.Mesh(g, wireMat.clone())
-      mesh.position.set(...positions[i]); wire.position.set(...positions[i])
+      const [px, py, pz] = positions[i]!; mesh.position.set(px, py, pz); wire.position.set(px, py, pz)
       scene.add(mesh, wire); meshes.push(mesh)
     })
 

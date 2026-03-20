@@ -57,8 +57,8 @@ export default function AdminCommentsPage() {
       })))
     )
     const loaded = results
-      .filter((r): r is PromiseFulfilledResult<MilestoneWithComments> => r.status === 'fulfilled')
-      .map(r => r.value)
+      .filter(r => r.status === 'fulfilled')
+      .map(r => (r as PromiseFulfilledResult<MilestoneWithComments>).value)
     setMilestones(loaded)
   }
 
