@@ -17,9 +17,9 @@ export function getAccessToken(): string | null {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type Role = 'admin' | 'manager' | 'client'
-export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
-export type MilestoneStatus = 'upcoming' | 'in_progress' | 'completed' | 'at_risk' | 'delayed'
-export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked'
+export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
+export type MilestoneStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked'
+export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked' | 'delayed'
 export type DocumentCategory =
   | 'contracts' | 'proposals' | 'design_assets' | 'technical_specs' | 'meeting_notes'
   | 'invoices_financials' | 'progress_reports' | 'test_reports' | 'deployment_guides'
@@ -46,10 +46,9 @@ export interface Client {
   companyName: string
   logo?: string
   industry?: string
-  contactName: string
-  contactEmail: string
+  contactName?: string
+  contactEmail?: string
   contactPhone?: string
-  website?: string
   isActive: boolean
   onboardedAt?: string
   createdAt: string
@@ -62,10 +61,11 @@ export interface Milestone {
   title: string
   description?: string
   status: MilestoneStatus
-  dueDate?: string
+  targetDate?: string
   completedAt?: string
   order: number
   _count?: { comments: number }
+  project?: { id: string; name: string; client?: { id: string; companyName: string } }
 }
 
 export interface Task {
@@ -112,7 +112,7 @@ export interface Document {
   uploadedAt: string
   viewedAt?: string
   downloadedAt?: string
-  project?: { id: string; name: string }
+  project?: { id: string; name: string; client?: { id: string; companyName: string } }
   uploadedBy?: { id: string; name: string }
 }
 
@@ -133,20 +133,28 @@ export interface Meeting {
 
 export interface Invoice {
   id: string
-  projectId?: string
   clientId: string
   invoiceNumber: string
   amount: number
-  currency: string
   status: InvoiceStatus
   dueDate: string
-  paidAt?: string
-  description?: string
+  paidDate?: string
   notes?: string
   pdfUrl?: string
   createdAt: string
   client?: { id: string; companyName: string }
-  project?: { id: string; name: string }
+}
+
+export interface ProgressComment {
+  id: string
+  progressUpdateId: string
+  userId: string
+  body: string
+  parentId?: string
+  isDeleted: boolean
+  createdAt: string
+  user?: { id: string; name: string; avatar?: string }
+  replies?: ProgressComment[]
 }
 
 export interface ProgressUpdate {
@@ -163,6 +171,8 @@ export interface ProgressUpdate {
   createdAt: string
   user?: { id: string; name: string; avatar?: string }
   _count?: { comments: number; reactions: number }
+  comments?: ProgressComment[]
+  project?: { id: string; name: string; client?: { companyName: string } }
 }
 
 export interface MilestoneComment {
@@ -239,7 +249,7 @@ async function request<T>(
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
 
-  if (res.status === 401 && retry) {
+  if (res.status === 401 && retry && path !== '/auth/refresh') {
     const ok = await tryRefresh()
     if (ok) return request<T>(method, path, body, false)
     accessToken = null
@@ -278,6 +288,25 @@ export const authApi = {
     api.post<void>('/auth/reset-password', { email, otp, newPassword }),
 }
 
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export const usersApi = {
+  uploadAvatar: (file: File) => {
+    const form = new FormData()
+    form.append('avatar', file)
+    return fetch(`${BASE}/users/me/avatar`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: form,
+    }).then(async r => {
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.message ?? 'Upload failed')
+      return data as { user: User }
+    })
+  },
+  removeAvatar: () => api.delete<{ message: string }>('/users/me/avatar'),
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export const adminApi = {
@@ -306,7 +335,7 @@ export const adminApi = {
 export const clientsApi = {
   list: () => api.get<{ clients: Client[] }>('/clients'),
   get: (id: string) => api.get<{ client: Client & { projects: Project[]; users: User[] } }>(`/clients/${id}`),
-  create: (data: Omit<Client, 'id' | 'isActive' | 'createdAt' | '_count'>) =>
+  create: (data: Omit<Client, 'id' | 'isActive' | 'createdAt' | '_count' | 'onboardedAt'>) =>
     api.post<{ client: Client }>('/clients', data),
   update: (id: string, data: Partial<Client>) => api.patch<{ client: Client }>(`/clients/${id}`, data),
   deactivate: (id: string) => api.patch<{ client: Client }>(`/clients/${id}/deactivate`),
@@ -339,7 +368,7 @@ export const milestonesApi = {
   get: (id: string) => api.get<{ milestone: Milestone & { comments: MilestoneComment[] } }>(`/milestones/${id}`),
   create: (data: {
     projectId: string; title: string; description?: string
-    dueDate?: string; order?: number
+    targetDate?: string; order?: number
   }) => api.post<{ milestone: Milestone }>('/milestones', data),
   update: (id: string, data: Partial<Milestone>) => api.patch<{ milestone: Milestone }>(`/milestones/${id}`, data),
   delete: (id: string) => api.delete<void>(`/milestones/${id}`),
@@ -347,6 +376,8 @@ export const milestonesApi = {
     api.post<{ comment: MilestoneComment }>(`/milestones/${id}/comments`, { body, parentId }),
   resolveComment: (commentId: string) =>
     api.patch<{ comment: MilestoneComment }>(`/milestones/comments/${commentId}/resolve`),
+  deleteComment: (commentId: string) =>
+    api.delete<{ message: string }>(`/milestones/comments/${commentId}`),
 }
 
 // ── Documents ─────────────────────────────────────────────────────────────────
@@ -360,6 +391,19 @@ export const documentsApi = {
     return api.get<{ documents: Document[] }>(`/documents${q.size ? `?${q}` : ''}`)
   },
   get: (id: string) => api.get<{ document: Document }>(`/documents/${id}`),
+  upload: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return fetch(`${BASE}/documents/upload`, {
+      method: 'POST',
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      body: form,
+    }).then(async r => {
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.message ?? 'Upload failed')
+      return data as { fileUrl: string; fileKey: string; fileSize: number; mimeType: string; originalName: string }
+    })
+  },
   create: (data: {
     projectId: string; label: string; fileUrl: string
     fileKey: string; category: DocumentCategory
@@ -426,13 +470,29 @@ export const progressApi = {
   update: (id: string, data: Partial<ProgressUpdate>) => api.patch<{ update: ProgressUpdate }>(`/progress/${id}`, data),
   delete: (id: string) => api.delete<void>(`/progress/${id}`),
   addComment: (id: string, body: string, parentId?: string) =>
-    api.post<{ comment: object }>(`/progress/${id}/comments`, { body, parentId }),
+    api.post<{ comment: ProgressComment }>(`/progress/${id}/comments`, { body, parentId }),
+  deleteComment: (commentId: string) =>
+    api.delete<{ message: string }>(`/progress/comments/${commentId}`),
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 
+export type NotificationType =
+  | 'meeting_reminder' | 'new_document' | 'progress_update'
+  | 'new_comment' | 'mention' | 'payment_due' | 'milestone_reached'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  link?: string
+  isRead: boolean
+  createdAt: string
+}
+
 export const notificationsApi = {
-  list: () => api.get<{ notifications: object[]; unreadCount: number }>('/notifications'),
+  list: () => api.get<{ notifications: Notification[]; unreadCount: number }>('/notifications'),
   markRead: (id: string) => api.patch<void>(`/notifications/${id}/read`),
   markAllRead: () => api.post<void>('/notifications/read-all'),
 }
