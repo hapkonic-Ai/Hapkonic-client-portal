@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { User, Bell, Shield, Palette, Check } from 'lucide-react'
+import { User, Bell, Shield, Palette, Check, Camera, Trash2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
-import { authApi } from '../../lib/api'
+import { authApi, usersApi } from '../../lib/api'
 import { Card } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
@@ -19,9 +19,39 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarLoading, setAvatarLoading] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarLoading(true); setAvatarError(null)
+    try {
+      const { user: updated } = await usersApi.uploadAvatar(file)
+      updateUser({ avatar: updated.avatar ?? undefined })
+    } catch (err) {
+      setAvatarError((err as Error).message)
+    } finally {
+      setAvatarLoading(false)
+      e.target.value = ''
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setAvatarLoading(true); setAvatarError(null)
+    try {
+      await usersApi.removeAvatar()
+      updateUser({ avatar: undefined })
+    } catch (err) {
+      setAvatarError((err as Error).message)
+    } finally {
+      setAvatarLoading(false)
+    }
+  }
 
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -65,15 +95,54 @@ export default function SettingsPage() {
       {/* Profile */}
       <Section title="Profile">
         <div className="flex items-center gap-4 mb-4">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-bold gradient-primary"
-          >
-            {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? <User size={20} />}
+          {/* Avatar with upload overlay */}
+          <div className="relative shrink-0">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-lg font-bold gradient-primary">
+                  {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? <User size={20} />}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarLoading}
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: 'var(--color-primary-500)', color: '#fff' }}
+              title="Change photo"
+            >
+              <Camera size={12} />
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
-          <div>
+
+          <div className="flex-1 min-w-0">
             <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{user?.name}</p>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
             <p className="text-xs capitalize mt-0.5" style={{ color: 'var(--text-secondary)' }}>{user?.role}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={avatarLoading}
+                className="text-xs px-2 py-1 rounded-lg transition-colors"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
+              >
+                {avatarLoading ? 'Uploading…' : 'Change photo'}
+              </button>
+              {user?.avatar && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  disabled={avatarLoading}
+                  className="text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1"
+                  style={{ color: '#ef4444', background: 'rgba(239,68,68,0.08)' }}
+                >
+                  <Trash2 size={10} /> Remove
+                </button>
+              )}
+            </div>
+            {avatarError && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{avatarError}</p>}
           </div>
         </div>
         <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
