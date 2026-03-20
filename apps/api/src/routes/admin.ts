@@ -1,10 +1,12 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { authenticate, authorize } from '../middleware/auth'
 import { validate } from '../middleware/validate'
 import { AppError } from '../middleware/errorHandler'
+import { redisSet } from '../lib/redis'
 
 export const adminRouter = Router()
 adminRouter.use(authenticate, authorize('admin', 'manager'))
@@ -25,6 +27,11 @@ const updateUserSchema = z.object({
   forcePasswordReset: z.boolean().optional(),
 })
 
+const paginationSchema = z.object({
+  take: z.coerce.number().int().min(1).max(100).default(50),
+  skip: z.coerce.number().int().min(0).max(100000).default(0),
+})
+
 // ── Users ────────────────────────────────────────────────
 
 // GET /admin/users
@@ -42,7 +49,7 @@ adminRouter.get('/users', async (_req, res, next) => {
   } catch (err) { next(err) }
 })
 
-// POST /admin/users — create user with hashed password
+// POST /admin/users — create user, send password reset link (never email plaintext password)
 adminRouter.post('/users', validate(createUserSchema), async (req, res, next) => {
   try {
     const data = req.body as z.infer<typeof createUserSchema>
@@ -62,15 +69,24 @@ adminRouter.post('/users', validate(createUserSchema), async (req, res, next) =>
       select: { id: true, email: true, name: true, role: true, clientId: true },
     })
 
-    // Send credentials email — Phase 4 fleshes this out fully
+    // Send welcome email with a password reset OTP — never send plaintext passwords
     if (process.env['RESEND_API_KEY']) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString()
+      await redisSet(`otp:${data.email}`, otp, 24 * 60 * 60) // 24h expiry for first-login
+
       const { Resend } = await import('resend')
       const resend = new Resend(process.env['RESEND_API_KEY'])
       await resend.emails.send({
         from: process.env['RESEND_FROM'] ?? 'noreply@hapkonic.com',
         to: data.email,
-        subject: 'Your Hapkonic Portal Credentials',
-        html: `<p>Welcome to the Hapkonic Client Portal.</p><p>Email: <strong>${data.email}</strong><br>Password: <strong>${data.password}</strong></p><p>You will be asked to change your password on first login.</p>`,
+        subject: 'Welcome to Hapkonic Client Portal',
+        html: `
+          <p>Hi ${data.name},</p>
+          <p>Your Hapkonic Client Portal account has been created.</p>
+          <p>Use this one-time code to set your password: <strong>${otp}</strong></p>
+          <p>This code expires in 24 hours.</p>
+          <p>Login at: ${process.env['CLIENT_URL']}/login</p>
+        `,
       }).catch(() => {})
     }
 
@@ -112,7 +128,9 @@ adminRouter.post('/users/:id/reset-password', async (req, res, next) => {
 // GET /admin/logs
 adminRouter.get('/logs', async (req, res, next) => {
   try {
-    const { userId, action, entityType, take, skip } = req.query as Record<string, string | undefined>
+    const { userId, action, entityType } = req.query as Record<string, string | undefined>
+    const { take, skip } = paginationSchema.parse(req.query)
+
     const logs = await prisma.adminLog.findMany({
       where: {
         ...(userId ? { userId } : {}),
@@ -120,8 +138,8 @@ adminRouter.get('/logs', async (req, res, next) => {
         ...(entityType ? { entityType } : {}),
       },
       orderBy: { createdAt: 'desc' },
-      take: take ? parseInt(take) : 50,
-      skip: skip ? parseInt(skip) : 0,
+      take,
+      skip,
       include: { user: { select: { id: true, name: true, email: true } } },
     })
     res.json({ logs })
