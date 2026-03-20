@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2, RefreshCw, X, UserCircle2, Copy, Check } from 'lucide-react'
+import { Plus, Search, Edit2, RefreshCw, X, UserCircle2, Copy, Check, Trash2 } from 'lucide-react'
 import { adminApi, clientsApi, type User, type Client, type Role } from '../../lib/api'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -124,6 +124,10 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState<User | null>(null)
   const [resetting, setResetting] = useState<User | null>(null)
   const [resetPw, setResetPw] = useState('')
+  const [deleting, setDeleting] = useState<User | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -157,6 +161,18 @@ export default function AdminUsersPage() {
     if (!resetting || resetPw.length < 8) return
     await adminApi.resetUserPassword(resetting.id, resetPw)
     setResetting(null); setResetPw('')
+  }
+
+  async function handleDelete() {
+    if (!deleting || deleteConfirm !== deleting.name) return
+    setDeleteLoading(true); setDeleteError(null)
+    try {
+      await adminApi.deleteUser(deleting.id)
+      setUsers(prev => prev.filter(u => u.id !== deleting.id))
+      setDeleting(null); setDeleteConfirm('')
+    } catch (err) {
+      setDeleteError((err as Error).message)
+    } finally { setDeleteLoading(false) }
   }
 
   return (
@@ -233,6 +249,12 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-1 justify-end">
                         <Button variant="ghost" size="icon" onClick={() => setEditing(user)} title="Edit"><Edit2 size={14} /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { setResetting(user); setResetPw('') }} title="Reset Password"><RefreshCw size={14} /></Button>
+                        {user.role !== 'admin' && (
+                          <Button variant="ghost" size="icon" onClick={() => { setDeleting(user); setDeleteConfirm(''); setDeleteError(null) }} title="Delete User"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>
@@ -262,6 +284,30 @@ export default function AdminUsersPage() {
             <div className="flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setResetting(null)}>Cancel</Button>
               <Button variant="destructive" onClick={handleReset} disabled={resetPw.length < 8}>Reset Password</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+      <Modal isOpen={!!deleting} onClose={() => setDeleting(null)} title="Delete User" size="sm">
+        {deleting && (
+          <div className="space-y-4">
+            <div className="p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <p className="text-sm font-medium text-red-500">This action is permanent and cannot be undone.</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                All comments, reactions, and notifications for this user will be removed. Documents they uploaded will remain but lose author attribution.
+              </p>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              To confirm, type <strong style={{ color: 'var(--text-primary)' }}>{deleting.name}</strong> below:
+            </p>
+            <Input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder={deleting.name} autoFocus />
+            {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setDeleting(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDelete} loading={deleteLoading}
+                disabled={deleteConfirm !== deleting.name}>
+                Delete User
+              </Button>
             </div>
           </div>
         )}

@@ -107,6 +107,53 @@ adminRouter.patch('/users/:id', validate(updateUserSchema), async (req, res, nex
   } catch (err) { next(err) }
 })
 
+// DELETE /admin/users/:id — permanently delete user (admin-only)
+adminRouter.delete('/users/:id', authorize('admin'), async (req, res, next) => {
+  try {
+    const targetId = req.params['id'] as string
+
+    // Prevent self-deletion
+    if (targetId === req.user!.userId) {
+      throw new AppError(400, 'You cannot delete your own account', 'SELF_DELETE')
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, name: true, email: true, role: true, avatarKey: true },
+    })
+    if (!target) throw new AppError(404, 'User not found', 'NOT_FOUND')
+
+    // Prevent deleting other admins (only super-safe escalation path)
+    if (target.role === 'admin') {
+      throw new AppError(403, 'Cannot delete admin accounts. Deactivate instead.', 'FORBIDDEN')
+    }
+
+    // Clean up cloud avatar
+    if (target.avatarKey) {
+      const { deleteFromCloud } = await import('../lib/utapi')
+      await deleteFromCloud([target.avatarKey]).catch(() => {})
+    }
+
+    // Log deletion BEFORE removing the user (this log entry belongs to the admin performing the delete)
+    await prisma.adminLog.create({
+      data: {
+        userId: req.user!.userId,
+        action: 'DELETE_USER',
+        entityType: 'User',
+        entityId: targetId,
+        metadata: { deletedUser: { name: target.name, email: target.email, role: target.role } } as never,
+        ipAddress: req.ip,
+      },
+    })
+
+    // Delete user — cascading FKs handle comments, reactions, notifications, progress updates, admin logs.
+    // Documents & invoices use SetNull (preserve files, lose author attribution).
+    await prisma.user.delete({ where: { id: targetId } })
+
+    res.json({ message: `User ${target.name} has been permanently deleted` })
+  } catch (err) { next(err) }
+})
+
 // POST /admin/users/:id/reset-password
 adminRouter.post('/users/:id/reset-password', async (req, res, next) => {
   try {

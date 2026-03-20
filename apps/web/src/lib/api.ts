@@ -319,6 +319,7 @@ export const adminApi = {
     api.patch<{ user: User }>(`/admin/users/${id}`, data),
   resetUserPassword: (id: string, newPassword: string) =>
     api.post<{ message: string }>(`/admin/users/${id}/reset-password`, { newPassword }),
+  deleteUser: (id: string) => api.delete<{ message: string }>(`/admin/users/${id}`),
   getLogs: (params?: { userId?: string; action?: string; entityType?: string; take?: number; skip?: number }) => {
     const q = new URLSearchParams()
     if (params?.userId) q.set('userId', params.userId)
