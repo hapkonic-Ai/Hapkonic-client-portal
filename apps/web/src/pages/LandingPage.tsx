@@ -436,7 +436,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl gradient-primary" />
+              <img src="/hapkonic-logo-removebg-preview.png" alt="Hapkonic" className="w-8 h-8 object-contain" />
               <span className="text-white font-bold text-lg">Hapkonic</span>
             </div>
             <p className="text-sm max-w-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -484,8 +484,8 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <ServicesSection />
-      <StatsSection />
-      <TestimonialsSection />
+      {/* <StatsSection /> */}
+      {/* <TestimonialsSection /> */}
       <Footer />
     </div>
   )
