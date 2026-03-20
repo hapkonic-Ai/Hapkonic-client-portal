@@ -19,7 +19,7 @@ export function PortalLayout() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar sidebarCollapsed={sidebarCollapsed} />
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+        <main className="flex-1 overflow-y-auto px-4 pt-6 pb-24 lg:px-8 lg:pb-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

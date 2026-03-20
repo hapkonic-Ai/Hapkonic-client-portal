@@ -104,6 +104,8 @@
   --bg-base: var(--color-neutral-50);
   --bg-surface: var(--color-neutral-0);
   --bg-elevated: var(--color-neutral-100);
+  --bg-secondary: var(--color-neutral-100);
+  --bg-primary: var(--color-neutral-0);
   --bg-overlay: var(--color-neutral-200);
   --bg-sidebar: var(--color-neutral-0);
 
@@ -115,7 +117,9 @@
   --border-default: var(--color-neutral-200);
   --border-subtle: var(--color-neutral-100);
   --border-strong: var(--color-neutral-300);
+  --border: var(--color-neutral-200);
 
+  --primary-500: var(--color-primary-500);
   --ring-focus: var(--color-primary-500);
 
   color-scheme: light;
@@ -125,6 +129,8 @@
   --bg-base: var(--color-neutral-950);
   --bg-surface: var(--color-neutral-900);
   --bg-elevated: var(--color-neutral-800);
+  --bg-secondary: var(--color-neutral-800);
+  --bg-primary: var(--color-neutral-900);
   --bg-overlay: var(--color-neutral-700);
   --bg-sidebar: #0c1220;
 
@@ -133,10 +139,12 @@
   --text-muted: var(--color-neutral-500);
   --text-inverse: var(--color-neutral-900);
 
-  --border-default: var(--color-neutral-800);
-  --border-subtle: var(--color-neutral-900);
-  --border-strong: var(--color-neutral-700);
+  --border-default: var(--color-neutral-700);
+  --border-subtle: var(--color-neutral-800);
+  --border-strong: var(--color-neutral-600);
+  --border: var(--color-neutral-700);
 
+  --primary-500: var(--color-primary-400);
   --ring-focus: var(--color-primary-400);
 
   color-scheme: dark;
