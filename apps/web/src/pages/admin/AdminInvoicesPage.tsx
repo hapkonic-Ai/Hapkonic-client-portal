@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, X, DollarSign, CheckCircle, Clock, AlertCircle, Edit2 } from 'lucide-react'
 import { invoicesApi, clientsApi, projectsApi, type Invoice, type Client, type Project, type InvoiceStatus } from '../../lib/api'
+import { useToast } from '../../components/ui/Toast'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Card } from '../../components/ui/Card'
@@ -77,6 +78,7 @@ function InvoiceForm({ clients, projects, onSubmit, onClose }: {
 }
 
 export default function AdminInvoicesPage() {
+  const { toast } = useToast()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [projects, setProjects] = useState<Project[]>([])
@@ -109,14 +111,20 @@ export default function AdminInvoicesPage() {
   }, [search, statusFilter, invoices])
 
   async function handleCreate(data: Record<string, unknown>) {
-    const { invoice } = await invoicesApi.create(data as Parameters<typeof invoicesApi.create>[0])
-    setInvoices(prev => [invoice, ...prev]); setShowCreate(false)
+    try {
+      const { invoice } = await invoicesApi.create(data as Parameters<typeof invoicesApi.create>[0])
+      setInvoices(prev => [invoice, ...prev]); setShowCreate(false)
+      toast('Invoice created', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to create invoice', 'error') }
   }
 
   async function handleStatusUpdate() {
     if (!updatingStatus) return
-    const { invoice } = await invoicesApi.updateStatus(updatingStatus.id, newStatus)
-    setInvoices(prev => prev.map(i => i.id === invoice.id ? invoice : i)); setUpdatingStatus(null)
+    try {
+      const { invoice } = await invoicesApi.updateStatus(updatingStatus.id, newStatus)
+      setInvoices(prev => prev.map(i => i.id === invoice.id ? invoice : i)); setUpdatingStatus(null)
+      toast('Invoice status updated', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to update status', 'error') }
   }
 
   const statCards = [
@@ -192,12 +200,12 @@ export default function AdminInvoicesPage() {
                     style={{ borderBottom: '1px solid var(--border)' }} className="transition-colors hover:bg-[var(--bg-secondary)]">
                     <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{inv.invoiceNumber}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{inv.client?.companyName ?? '—'}</td>
-                    <td className="px-4 py-3 font-semibold" style={{ color: 'var(--text-primary)' }}>{formatCurrency(inv.amount, inv.currency)}</td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: 'var(--text-primary)' }}>{formatCurrency(inv.amount)}</td>
                     <td className="px-4 py-3"><Badge variant={statusBadge[inv.status]}>{inv.status.replace('_', ' ')}</Badge></td>
                     <td className="px-4 py-3 text-xs" style={{ color: new Date(inv.dueDate) < new Date() && inv.status !== 'paid' ? '#ef4444' : 'var(--text-muted)' }}>
                       {formatDate(inv.dueDate)}
                     </td>
-                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{inv.paidAt ? formatDate(inv.paidAt) : '—'}</td>
+                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{inv.paidDate ? formatDate(inv.paidDate) : '—'}</td>
                     <td className="px-4 py-3">
                       <Button variant="ghost" size="icon" onClick={() => { setUpdatingStatus(inv); setNewStatus(inv.status) }} title="Update Status">
                         <Edit2 size={14} />
@@ -220,7 +228,7 @@ export default function AdminInvoicesPage() {
           <div className="space-y-4">
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Invoice <strong style={{ color: 'var(--text-primary)' }}>{updatingStatus.invoiceNumber}</strong>
-              {' '}— {formatCurrency(updatingStatus.amount, updatingStatus.currency)}
+              {' '}— {formatCurrency(updatingStatus.amount)}
             </p>
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>New Status</label>

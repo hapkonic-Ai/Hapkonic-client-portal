@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2, Trash2, Power, ExternalLink, X, Building2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Power, X, Building2 } from 'lucide-react'
 import { clientsApi, type Client } from '../../lib/api'
+import { usePermissions } from '../../hooks/usePermissions'
+import { useToast } from '../../components/ui/Toast'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Card } from '../../components/ui/Card'
@@ -25,7 +27,6 @@ function ClientForm({ initial, onSubmit, onClose }: ClientFormProps) {
     contactName: initial?.contactName ?? '',
     contactEmail: initial?.contactEmail ?? '',
     contactPhone: initial?.contactPhone ?? '',
-    website: initial?.website ?? '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +38,13 @@ function ClientForm({ initial, onSubmit, onClose }: ClientFormProps) {
     setLoading(true)
     setError(null)
     try {
-      await onSubmit(form)
+      await onSubmit({
+        ...form,
+        industry: form.industry || undefined,
+        contactName: form.contactName || undefined,
+        contactEmail: form.contactEmail || undefined,
+        contactPhone: form.contactPhone || undefined,
+      })
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -54,20 +61,12 @@ function ClientForm({ initial, onSubmit, onClose }: ClientFormProps) {
         required
         placeholder="Acme Corp"
       />
-      <div className="grid grid-cols-2 gap-3">
-        <Input
-          label="Industry"
-          value={form.industry}
-          onChange={e => set('industry', e.target.value)}
-          placeholder="SaaS, E-Commerce..."
-        />
-        <Input
-          label="Website"
-          value={form.website}
-          onChange={e => set('website', e.target.value)}
-          placeholder="https://..."
-        />
-      </div>
+      <Input
+        label="Industry"
+        value={form.industry}
+        onChange={e => set('industry', e.target.value)}
+        placeholder="SaaS, E-Commerce..."
+      />
       <Input
         label="Contact Name"
         value={form.contactName}
@@ -107,6 +106,8 @@ function ClientForm({ initial, onSubmit, onClose }: ClientFormProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminClientsPage() {
+  const { canDelete } = usePermissions()
+  const { toast } = useToast()
   const [clients, setClients] = useState<Client[]>([])
   const [filtered, setFiltered] = useState<Client[]>([])
   const [search, setSearch] = useState('')
@@ -135,29 +136,38 @@ export default function AdminClientsPage() {
     setFiltered(
       clients.filter(c =>
         c.companyName.toLowerCase().includes(q) ||
-        c.contactName.toLowerCase().includes(q) ||
-        c.contactEmail.toLowerCase().includes(q) ||
+        (c.contactName ?? '').toLowerCase().includes(q) ||
+        (c.contactEmail ?? '').toLowerCase().includes(q) ||
         (c.industry ?? '').toLowerCase().includes(q)
       )
     )
   }, [search, clients])
 
   async function handleCreate(data: Partial<Client>) {
-    const { client } = await clientsApi.create(data as Parameters<typeof clientsApi.create>[0])
-    setClients(prev => [client, ...prev])
-    setShowCreate(false)
+    try {
+      const { client } = await clientsApi.create(data as Parameters<typeof clientsApi.create>[0])
+      setClients(prev => [client, ...prev])
+      setShowCreate(false)
+      toast('Client added', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to add client', 'error') }
   }
 
   async function handleEdit(data: Partial<Client>) {
     if (!editing) return
-    const { client } = await clientsApi.update(editing.id, data)
-    setClients(prev => prev.map(c => c.id === client.id ? client : c))
-    setEditing(null)
+    try {
+      const { client } = await clientsApi.update(editing.id, data)
+      setClients(prev => prev.map(c => c.id === client.id ? client : c))
+      setEditing(null)
+      toast('Client updated', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to update client', 'error') }
   }
 
   async function handleDeactivate(c: Client) {
-    const { client } = await clientsApi.deactivate(c.id)
-    setClients(prev => prev.map(x => x.id === client.id ? client : x))
+    try {
+      const { client } = await clientsApi.deactivate(c.id)
+      setClients(prev => prev.map(x => x.id === client.id ? client : x))
+      toast(`Client ${client.isActive ? 'activated' : 'deactivated'}`, 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to update client', 'error') }
   }
 
   async function handleDelete() {
@@ -168,6 +178,9 @@ export default function AdminClientsPage() {
       setClients(prev => prev.filter(c => c.id !== deleting.id))
       setDeleting(null)
       setConfirmDelete(false)
+      toast('Client deleted', 'success')
+    } catch (err) {
+      toast((err as Error).message || 'Failed to delete client', 'error')
     } finally {
       deleteRef.current = false
     }
@@ -241,17 +254,8 @@ export default function AdminClientsPage() {
                         <Avatar name={client.companyName} size="sm" />
                         <div>
                           <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{client.companyName}</p>
-                          {client.website && (
-                            <a
-                              href={client.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs"
-                              style={{ color: 'var(--primary-500)' }}
-                            >
-                              {client.website.replace(/^https?:\/\//, '')}
-                              <ExternalLink size={10} />
-                            </a>
+                          {client.industry && (
+                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{client.industry}</p>
                           )}
                         </div>
                       </div>
@@ -293,14 +297,16 @@ export default function AdminClientsPage() {
                         >
                           <Power size={14} style={{ color: client.isActive ? 'var(--text-muted)' : 'var(--primary-500)' }} />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => { setDeleting(client); setConfirmDelete(true) }}
-                          title="Delete"
-                        >
-                          <Trash2 size={14} style={{ color: '#ef4444' }} />
-                        </Button>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setDeleting(client); setConfirmDelete(true) }}
+                            title="Delete"
+                          >
+                            <Trash2 size={14} style={{ color: '#ef4444' }} />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

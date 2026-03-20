@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, X, CalendarDays, Edit2, Trash2, ExternalLink } from 'lucide-react'
 import { meetingsApi, projectsApi, type Meeting, type Project, type MeetingType } from '../../lib/api'
+import { usePermissions } from '../../hooks/usePermissions'
+import { useToast } from '../../components/ui/Toast'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Card } from '../../components/ui/Card'
@@ -100,6 +102,8 @@ function MeetingForm({ projects, initial, onSubmit, onClose }: {
 }
 
 export default function AdminMeetingsPage() {
+  const { canDelete } = usePermissions()
+  const { toast } = useToast()
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [filtered, setFiltered] = useState<Meeting[]>([])
@@ -112,8 +116,10 @@ export default function AdminMeetingsPage() {
 
   async function load() {
     setLoading(true)
-    const [{ meetings: m }, { projects: p }] = await Promise.all([meetingsApi.list(), projectsApi.list()])
-    setMeetings(m); setProjects(p); setLoading(false)
+    try {
+      const [{ meetings: m }, { projects: p }] = await Promise.all([meetingsApi.list(), projectsApi.list()])
+      setMeetings(m); setProjects(p)
+    } catch { /* ignore */ } finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, [])
@@ -128,20 +134,29 @@ export default function AdminMeetingsPage() {
   }, [search, upcoming, meetings])
 
   async function handleCreate(data: Record<string, unknown>) {
-    const { meeting } = await meetingsApi.create(data as Parameters<typeof meetingsApi.create>[0])
-    setMeetings(prev => [meeting, ...prev]); setShowCreate(false)
+    try {
+      await meetingsApi.create(data as Parameters<typeof meetingsApi.create>[0])
+      setShowCreate(false); await load()
+      toast('Meeting scheduled', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to create meeting', 'error') }
   }
 
   async function handleEdit(data: Record<string, unknown>) {
     if (!editing) return
-    const { meeting } = await meetingsApi.update(editing.id, data)
-    setMeetings(prev => prev.map(m => m.id === meeting.id ? meeting : m)); setEditing(null)
+    try {
+      await meetingsApi.update(editing.id, data)
+      setEditing(null); await load()
+      toast('Meeting updated', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to update meeting', 'error') }
   }
 
   async function handleDelete() {
     if (!deleting) return
-    await meetingsApi.delete(deleting.id)
-    setMeetings(prev => prev.filter(m => m.id !== deleting.id)); setDeleting(null)
+    try {
+      await meetingsApi.delete(deleting.id)
+      setDeleting(null); await load()
+      toast('Meeting deleted', 'success')
+    } catch (err) { toast((err as Error).message || 'Failed to delete meeting', 'error') }
   }
 
   function formatMeetingTime(start: string, end: string) {
@@ -207,7 +222,7 @@ export default function AdminMeetingsPage() {
                         </a>
                       )}
                       <Button variant="ghost" size="icon" onClick={() => setEditing(m)} title="Edit"><Edit2 size={14} /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleting(m)} title="Delete"><Trash2 size={14} style={{ color: '#ef4444' }} /></Button>
+                      {canDelete && <Button variant="ghost" size="icon" onClick={() => setDeleting(m)} title="Delete"><Trash2 size={14} style={{ color: '#ef4444' }} /></Button>}
                     </div>
                   </div>
                 </Card>

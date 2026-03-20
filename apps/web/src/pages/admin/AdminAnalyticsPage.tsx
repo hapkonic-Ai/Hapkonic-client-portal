@@ -38,7 +38,7 @@ type DateRange = '7d' | '30d' | '90d'
 function projectStatusVariant(status: Project['status']): 'success' | 'primary' | 'warning' | 'error' | 'neutral' {
   switch (status) {
     case 'completed':  return 'success'
-    case 'in_progress': return 'primary'
+    case 'active':     return 'primary'
     case 'planning':   return 'info' as 'primary'
     case 'on_hold':    return 'warning'
     case 'cancelled':  return 'error'
@@ -48,7 +48,7 @@ function projectStatusVariant(status: Project['status']): 'success' | 'primary' 
 
 function projectStatusLabel(status: Project['status']): string {
   switch (status) {
-    case 'in_progress': return 'In Progress'
+    case 'active': return 'Active'
     case 'on_hold':     return 'On Hold'
     case 'completed':   return 'Completed'
     case 'planning':    return 'Planning'
